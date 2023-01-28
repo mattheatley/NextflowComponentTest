@@ -73,7 +73,7 @@ println("\tcomponent: ${params.mod}")
 /* COMPONENT IMPORT */
 
 include { 
-    MODULE_PROCESS  as CURRENT_PROCESS;  // module component (if testing seperately)
+    //MODULE_PROCESS  as CURRENT_PROCESS;  // module component (if testing seperately)
     MODULE_WORKFLOW as CURRENT_WORKFLOW  // workflow component
     } from "./component/${params.mod}"   // .nf extension ignored for module
 

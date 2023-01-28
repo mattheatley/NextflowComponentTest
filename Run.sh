@@ -1,6 +1,6 @@
 
 
-# check module
+# check module name parsed
 if [ -z $1 ]; then 
 
     echo "NO MODULE SELECTED; EXITING..."
@@ -9,7 +9,7 @@ if [ -z $1 ]; then
 # specify command
 else 
 
-    WORKDIR="/Users/matt/Desktop/x.DEVOPS/Test"
+    WORKDIR="$(pwd)"
     WORKFLOW="$WORKDIR/Workflow.nf"
     CONFIG="$WORKDIR/Settings.config"
     PROFILE="local"
