@@ -1,4 +1,21 @@
 
+/* MODULE DEFINITION */
+
+process MODULE_PROCESS {
+
+  input:
+  val value
+  each letter
+  each symbol
+
+  exec:
+
+  println "Current Value: ${value} (Combination ${letter} ${symbol})"
+
+}
+
+
+
 /* WORKFLOW DEFINITION */
 
 workflow MODULE_WORKFLOW {
@@ -46,4 +63,18 @@ workflow MODULE_WORKFLOW {
 
     }
 
+    println "\nLooping via Process"
+
+    values  = Channel.from( 1,   2,   3 )
+
+    // each of; channel or list
+    letters = Channel.from('A', 'B', 'C')
+    symbols = ['!', '?' ]
+
+    MODULE_PROCESS(
+        values, 
+        letters, 
+        symbols )
+
 }
+
