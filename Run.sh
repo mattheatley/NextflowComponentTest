@@ -1,8 +1,9 @@
 
-# bash Run.sh local 
+# usage:
+# bash Run.sh PROFILE MODULE [PREVIOUS_LAUNCH_DIRECTORY] 
 
 ####################
-# SETUP
+# SETUP 
 ####################
 
 # define pipeline files
@@ -22,7 +23,7 @@ ARRAY=( "System ; -profile ; $1"
 
 
 ####################
-# PROCESS
+# PROCESS ARGUMENTS
 ####################
 
 printf "\nSETTINGS:\n\n"
@@ -55,7 +56,7 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
             if [ "$IDX" -eq "2" ]; then TAG="$ARG"; fi # specify run tag 
 
-        fi
+        fi # argument checks; INITIAL
 
 
 
@@ -65,9 +66,9 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
     else # 1-based count equals array length
     
-        NF_WORK_DIR="work-$TAG"; COMMAND+=" -w $NF_WORK_DIR" # specify work directory
+        NF_WORK_SUBDIR="work-$TAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
 
-        NF_LAUNCH_STEM="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_LAUNCH_STEM/launch-$TAG"; NF_LAUNCH_RESUME="$NF_LAUNCH_STEM/$ARG" # specify launch directory
+        NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/launch-$TAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
 
         if [ -z $ARG ]; then # previous launch directory not parsed
 
@@ -79,36 +80,37 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
             echo "*** Resuming Old Run ***"
 
-            if [ ! -d $NF_LAUNCH_RESUME ]; then # parsed launch directory not found
+            if [ ! -d $NF_LAUNCH_PREVIOUS ]; then # parsed launch directory not found
                 
                 echo "!!! No \"$ARG\" Directory to Resume"; exit 0 # raise error & exit
             
-            elif [ ! $NF_LAUNCH_RESUME == $NF_LAUNCH_SUBDIR* ]; then # parsed launch directory format does not conform
+            elif [ ! $NF_LAUNCH_PREVIOUS == $NF_LAUNCH_SUBDIR* ]; then # parsed launch directory format does not conform
 
                 echo "!!! \"$ARG\" Incompatible With \"$(basename $NF_LAUNCH_SUBDIR)\" !!!"; exit 0 # raise error & exit
         
             else # parsed launch directory found & formatted correctly
 
-                NF_LAUNCH_SUBDIR=$NF_LAUNCH_RESUME; COMMAND+=" $FLAG" # specify launch directory branch
+                NF_LAUNCH_SUBDIR=$NF_LAUNCH_PREVIOUS; COMMAND+=" $FLAG" # specify launch directory branch
 
-            fi
-        
-        fi
-        
-    fi
+            fi # mode checks; RESUME
+
+        fi # mode type; START|RESUME
+
+    fi # argument type; INITIAL|FINAL
 
 done
 
 
 
 ####################
-# LAUNCH
+# LAUNCH PIPELINE
 ####################
 
 # create & move to launch directory
 printf "\n>>> Changing To: $NF_LAUNCH_SUBDIR\n"
 mkdir -p $NF_LAUNCH_SUBDIR; cd $NF_LAUNCH_SUBDIR
 printf "\n>>> Launching From: $(pwd)\n"
+# N.B. individual launch directories avoid conflicts amongst .nextflow log
 
 # execute command
 printf "\nEXECUTING: $COMMAND\n\n"
