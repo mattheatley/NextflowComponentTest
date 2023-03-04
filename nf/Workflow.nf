@@ -59,6 +59,7 @@ println("\tsession id:   ${workflow.sessionId}")
 println("\tlaunch dir:   ${workflow.launchDir}")   // working directory (pwd)
 println("\tproject dir:  ${workflow.projectDir}")  // projectDIR/workflow.nf
 println("\twork dir:     ${workflow.workDir}")     // launchDIR/work (-w)
+//println("\tresults dir:  ${params.publishDir}")    // launchDIR/results
 println("\tconfig files: ${workflow.configFiles}")
 
 println("\n${INDENT}PROFILE:\n")
@@ -75,7 +76,7 @@ println("\tcomponent: ${params.mod}")
 include { 
     //MODULE_PROCESS  as CURRENT_PROCESS;  // module component (if testing seperately)
     MODULE_WORKFLOW as CURRENT_WORKFLOW  // workflow component
-    } from "./component/${params.mod}"   // .nf extension ignored for module
+    } from "${workflow.projectDir}/component/${params.mod}"   // .nf extension ignored for module
 
 
 

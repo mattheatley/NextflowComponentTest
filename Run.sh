@@ -1,46 +1,115 @@
 
+# bash Run.sh local 
 
-# check module name parsed
-if [ -z $1 ]; then 
+####################
+# SETUP
+####################
 
-    echo "!!! NO MODULE SELECTED !!!"
-    echo "EXITING..."
-    exit 0
+# define pipeline files
+PIPEDIR="$(pwd)/nf"
+WORKFLOW="$PIPEDIR/Workflow.nf"
+CONFIG="$PIPEDIR/Settings.config"
 
-# specify command
-else 
+# define basic command
+COMMAND="nextflow run $WORKFLOW -c $CONFIG"
 
-    WORKDIR="$(pwd)"
-    WORKFLOW="$WORKDIR/Workflow.nf"
-    CONFIG="$WORKDIR/Settings.config"
-    PROFILE="local"
-    MODULE="$1"
+# define array
+#       "KEY    ; FLAG     ; ARG"
+ARRAY=( "System ; -profile ; $1"
+        "Module ; --mod    ; $2"
+        "Mode   ; -resume  ; $3" )
 
-    COMMAND="nextflow run $WORKFLOW -c $CONFIG -profile $PROFILE --mod $MODULE"
 
-fi
 
-if [ -z $2 ]; then 
+####################
+# PROCESS
+####################
 
-    echo "*** STARTING NEW RUN ***"
+printf "\nSETTINGS:\n\n"
 
-else
+for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
-    if [ $2 != "resume" ]; then
+    CURRENT=$(echo ${ARRAY[$IDX]} | tr -d " ") # extract element via index & delete whitespace
 
-        echo "!!! UNRECOGNISED ARGUMENT \"$2\" !!! "
-        echo "EXITING..."
-        exit 0
+    IFS=';' read -r -a INFO <<< "$CURRENT" # split array entry by delimiter
+    
+    KEY="${INFO[0]}"; FLAG="${INFO[1]}"; ARG="${INFO[2]}" # extract entry info
+
+    let IDX+=1 # adjust 0-based index via arithmetic expression to 1-based count
+
+
+
+    ####################
+    # INITIAL ARGUMENTS
+    ####################
+
+    if [ "$IDX" -lt "${#ARRAY[@]}" ]; then # 1-based count less than array length
+    
+        if [ -z $ARG ]; then # profile or module not parsed
+
+            echo "!!! No $KEY Selected !!!"; exit 0 # raise error & exit
+        
+        else # profile or module parsed
+        
+            echo "*** $KEY: $ARG ***"; COMMAND+=" $FLAG $ARG" # log parsed settings
+
+            if [ "$IDX" -eq "2" ]; then TAG="$ARG"; fi # specify run tag 
+
+        fi
+
+
+
+    ####################
+    # FINAL ARGUMENT
+    ####################
 
     else
+    
+        NF_WORK_DIR="work-$TAG"; COMMAND+=" -w $NF_WORK_DIR" # specify work directory
 
-        echo "*** RESUMING PREVIOUS RUN ***"
+        NF_LAUNCH_STEM="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_LAUNCH_STEM/launch-$TAG"; NF_LAUNCH_RESUME="$NF_LAUNCH_STEM/$ARG" # specify launch directory
 
-        COMMAND="$COMMAND -resume"
+        if [ -z $ARG ]; then # previous launch directory not parsed
+
+            echo "*** Starting New Run ***"
+            
+            NF_LAUNCH_SUBDIR+="_$(date '+%Y%m%d-%H%M%S')" # label launch directory with datetime
+
+        else # previous launch directory parsed
+
+            echo "*** Resuming Old Run ***"
+
+            if [ ! -d $NF_LAUNCH_RESUME ]; then # parsed launch directory not found
+                
+                echo "!!! No \"$ARG\" Directory to Resume"; exit 0 # raise error & exit
+            
+            elif [ ! $NF_LAUNCH_RESUME == $NF_LAUNCH_SUBDIR* ]; then # parsed launch directory format does not conform
+
+                echo "!!! \"$ARG\" Incompatible With \"$(basename $NF_LAUNCH_SUBDIR)\" !!!"; exit 0 # raise error & exit
+        
+            else # parsed launch directory found & formatted correctly
+
+                NF_LAUNCH_SUBDIR=$NF_LAUNCH_RESUME; COMMAND+=" $FLAG" # specify launch directory branch
+
+            fi
+        
+        fi
+        
     fi
-fi
+
+done
 
 
-# execute
-echo "EXECUTING: $COMMAND"
-eval $COMMAND
+
+####################
+# LAUNCH
+####################
+
+# create & move to launch directory
+printf "\n>>> Changing To: $NF_LAUNCH_SUBDIR\n"
+mkdir -p $NF_LAUNCH_SUBDIR; cd $NF_LAUNCH_SUBDIR
+printf "\n>>> Launching From: $(pwd)\n"
+
+# execute command
+printf "\nEXECUTING: $COMMAND\n\n"
+#eval $COMMAND
