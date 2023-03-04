@@ -31,7 +31,7 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
     CURRENT=$(echo ${ARRAY[$IDX]} | tr -d " ") # extract element via index & delete whitespace
 
-    IFS=';' read -r -a INFO <<< "$CURRENT" # split array entry by delimiter
+    IFS=';' read -r -a INFO <<< "$CURRENT" # split entry into array by delimiter
     
     KEY="${INFO[0]}"; FLAG="${INFO[1]}"; ARG="${INFO[2]}" # extract entry info
 
@@ -63,7 +63,7 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
     # FINAL ARGUMENT
     ####################
 
-    else
+    else # 1-based count equals array length
     
         NF_WORK_DIR="work-$TAG"; COMMAND+=" -w $NF_WORK_DIR" # specify work directory
 
