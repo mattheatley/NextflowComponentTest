@@ -107,11 +107,12 @@ done
 # LAUNCH PIPELINE
 ####################
 
+# individual launch directory avoids .nextflow conflict on resume
+
 # create & move to launch directory
 printf "\n>>> Changing To: $NF_LAUNCH_SUBDIR\n"
 mkdir -p $NF_LAUNCH_SUBDIR; cd $NF_LAUNCH_SUBDIR
 printf "\n>>> Launching From: $(pwd)\n"
-# N.B. individual launch directories avoid conflicts amongst .nextflow log
 
 # execute command
 printf "\nEXECUTING: $COMMAND\n\n"
