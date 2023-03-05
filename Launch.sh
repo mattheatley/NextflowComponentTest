@@ -1,6 +1,6 @@
 
 # usage:
-# bash Run.sh PROFILE MODULE [PREVIOUS_LAUNCH_DIRECTORY] 
+# bash Launch.sh PROFILE MODULE [PREVIOUS_LAUNCH_DIRECTORY] 
 
 ####################
 # SETUP 
@@ -19,6 +19,9 @@ COMMAND="nextflow run $WORKFLOW -c $CONFIG"
 ARRAY=( "System ; -profile ; $1"
         "Module ; --mod    ; $2"
         "Mode   ; -resume  ; $3" )
+
+# specify session tag 
+TAG="$2"
 
 
 
@@ -53,8 +56,6 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
         else # profile or module parsed
         
             echo "*** $KEY: $ARG ***"; COMMAND+=" $FLAG $ARG" # log parsed settings
-
-            if [ "$IDX" -eq "2" ]; then TAG="$ARG"; fi # specify run tag 
 
         fi # argument checks; INITIAL
 
