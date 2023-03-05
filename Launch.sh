@@ -1,9 +1,10 @@
+#!/usr/bin/env bash
+
+# aim:
+# individual launch directory avoids session .nextflow conflict on resume
 
 # usage:
 # bash Launch.sh PROFILE MODULE [PREVIOUS_LAUNCH_DIRECTORY] 
-
-# aim:
-# individual launch directory avoids .nextflow conflict on resume
 
 
 
