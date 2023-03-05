@@ -2,6 +2,11 @@
 # usage:
 # bash Launch.sh PROFILE MODULE [PREVIOUS_LAUNCH_DIRECTORY] 
 
+# aim:
+# individual launch directory avoids .nextflow conflict on resume
+
+
+
 ####################
 # SETUP 
 ####################
@@ -21,7 +26,7 @@ ARRAY=( "System ; -profile ; $1"
         "Mode   ; -resume  ; $3" )
 
 # specify session tag 
-TAG="$2"
+SESSION_TAG="$2"
 
 
 
@@ -67,9 +72,9 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
     else # 1-based count equals array length
     
-        NF_WORK_SUBDIR="work-$TAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
+        NF_WORK_SUBDIR="work-$SESSION_TAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
 
-        NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/launch-$TAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
+        NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/launch-$SESSION_TAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
 
         if [ -z $ARG ]; then # previous launch directory not parsed
 
@@ -106,8 +111,6 @@ done
 ####################
 # LAUNCH PIPELINE
 ####################
-
-# individual launch directory avoids .nextflow conflict on resume
 
 # create & move to launch directory
 printf "\n>>> Changing To: $NF_LAUNCH_SUBDIR\n"
