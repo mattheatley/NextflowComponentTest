@@ -14,8 +14,8 @@
 
 # define pipeline files
 PIPEDIR="$(pwd)/nf"
-WORKFLOW="$PIPEDIR/Workflow.nf"
-CONFIG="$PIPEDIR/Settings.config"
+WORKFLOW="$PIPEDIR/workflow.nf"
+CONFIG="$PIPEDIR/nextflow.config"
 
 # define basic command
 COMMAND="nextflow run $WORKFLOW -c $CONFIG"
@@ -73,7 +73,7 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
     else # 1-based count equals array length
     
-        NF_WORK_SUBDIR="work-$SESSION_TAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
+        #NF_WORK_SUBDIR="work-$SESSION_TAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
 
         NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/launch-$SESSION_TAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
 
