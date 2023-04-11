@@ -4,7 +4,7 @@
 # individual launch directory avoids session .nextflow conflict on resume
 
 # usage:
-# bash Launch.sh PROFILE MODULE [PREVIOUS_LAUNCH_DIRECTORY] 
+# bash LaunchNextflow.sh PROFILE COMPONENT [PREVIOUS_LAUNCH_DIRECTORY] 
 
 
 
@@ -12,21 +12,31 @@
 # SETUP 
 ####################
 
-# define pipeline files
+# define pipeline file paths
+
 PIPEDIR="$(pwd)/nf"
-WORKFLOW="$PIPEDIR/workflow.nf"
-CONFIG="$PIPEDIR/nextflow.config"
+
+WORKFLOW="$PIPEDIR/main.nf"
+
+CONFIG="$PIPEDIR/main.config"
+
+PARAMDIR="$PIPEDIR/parameters"
+
+
 
 # define basic command
-COMMAND="nextflow run $WORKFLOW -c $CONFIG"
 
-# define array
-#       "KEY    ; FLAG     ; ARG"
-ARRAY=( "System ; -profile ; $1"
-        "Module ; --mod    ; $2"
-        "Mode   ; -resume  ; $3" )
+COMMAND="nextflow -C $CONFIG run $WORKFLOW"
+
+# define argument info
+
+#       "KEY    ; FLAG         ; ARG"
+ARRAY=( "System    ; -profile     ; $1"
+        "Component ; -params-file ; $PARAMDIR/$2.json"
+        "Mode      ; -resume      ; $3" )
 
 # specify session tag 
+
 SESSION_TAG="$2"
 
 
@@ -55,11 +65,11 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
     if [ "$IDX" -lt "${#ARRAY[@]}" ]; then # 1-based count less than array length
     
-        if [ -z $ARG ]; then # profile or module not parsed
+        if [ -z $ARG ]; then # profile or component not parsed
 
             echo "!!! No $KEY Selected !!!"; exit 0 # raise error & exit
         
-        else # profile or module parsed
+        else # profile or component parsed
         
             echo "*** $KEY: $ARG ***"; COMMAND+=" $FLAG $ARG" # log parsed settings
 
