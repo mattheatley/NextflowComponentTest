@@ -4,11 +4,13 @@
 // enable dsl syntax extension (should be applied by default)
 nextflow.enable.dsl = 2
 
+INDENT = '   '
+
 start_message = """
- ------------------------ 
-      NEXTFLOW TESTING    
-       WORKFLOW START  
- ------------------------ 
+${INDENT}------------------------ 
+${INDENT}     NEXTFLOW TESTING    
+${INDENT}      WORKFLOW START  
+${INDENT}------------------------ 
 """
 println(start_message)
 
@@ -21,7 +23,6 @@ if( !params.component ) {
 
 /* WORKFLOW INTROSPECTION */
 
-INDENT = '   '
 println("\n${INDENT}WORKFLOW:\n")
 println("\tscipt name:   ${workflow.scriptName}")
 println("\trevision:     ${workflow.revision}")
@@ -42,11 +43,13 @@ println("\tcomponent: ${params.component}")
 
 
 
-/* IMPORT COMPONENT */
+/* IMPORT COMPONENTS */
+
+moduleDir = "${workflow.projectDir}/modules"
 
 include { 
     MODULE_WORKFLOW as CURRENT_WORKFLOW
-    } from "${workflow.projectDir}/components/${params.component}"
+    } from "${moduleDir}/${params.component}"
     /* N.B. .nf extension ignored for component module & workflow files */
 
 

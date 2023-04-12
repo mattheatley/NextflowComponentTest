@@ -1,0 +1,26 @@
+digraph "dag_20230412174554" {
+p0 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.of"];
+p2 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="merge"];
+p0 -> p2 [label="CHANNEL_VAL1"];
+
+p1 [shape=point,label="",fixedsize=true,width=0.1,xlabel="Channel.of"];
+p2 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="merge"];
+p1 -> p2 [label="CHANNEL_VAL2"];
+
+p2 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="merge"];
+p3 [label="CURRENT_WORKFLOW:MODULE_PROCESS"];
+p2 -> p3 [label="CHANNEL_MERGED"];
+
+p3 [label="CURRENT_WORKFLOW:MODULE_PROCESS"];
+p5 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="view"];
+p3 -> p5 [label="CHANNEL_PROCESS_INFO"];
+
+p3 [label="CURRENT_WORKFLOW:MODULE_PROCESS"];
+p4 [shape=point];
+p3 -> p4 [label="CHANNEL_PROCESS_STD"];
+
+p5 [shape=circle,label="",fixedsize=true,width=0.1,xlabel="view"];
+p6 [shape=point];
+p5 -> p6;
+
+}

@@ -12,15 +12,15 @@
 # SETUP 
 ####################
 
-# define pipeline file paths
+printf "\nRunning Launch Script\n\n"
 
 PIPEDIR="$(pwd)/nf"
 
 WORKFLOW="$PIPEDIR/main.nf"
 
-CONFIG="$PIPEDIR/main.config"
+CONFIG="$PIPEDIR/nextflow.config"
 
-PARAMDIR="$PIPEDIR/parameters"
+PARAMDIR="$PIPEDIR/params"
 
 PARAMTAG="$2"
 
@@ -42,8 +42,6 @@ ARRAY=( "System    ; -profile     ; $1"
 ####################
 # PROCESS ARGUMENTS
 ####################
-
-printf "\nSETTINGS:\n\n"
 
 for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
