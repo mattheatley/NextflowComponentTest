@@ -22,6 +22,8 @@ CONFIG="$PIPEDIR/main.config"
 
 PARAMDIR="$PIPEDIR/parameters"
 
+PARAMTAG="$2"
+
 
 
 # define basic command
@@ -30,14 +32,10 @@ COMMAND="nextflow -C $CONFIG run $WORKFLOW"
 
 # define argument info
 
-#       "KEY    ; FLAG         ; ARG"
+#       "KEY       ; FLAG         ; ARG"
 ARRAY=( "System    ; -profile     ; $1"
-        "Component ; -params-file ; $PARAMDIR/$2.json"
+        "Component ; -params-file ; $2"
         "Mode      ; -resume      ; $3" )
-
-# specify session tag 
-
-SESSION_TAG="$2"
 
 
 
@@ -49,13 +47,13 @@ printf "\nSETTINGS:\n\n"
 
 for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
-    CURRENT=$(echo ${ARRAY[$IDX]} | tr -d " ") # extract element via index & delete whitespace
+    CURRENT=$(echo ${ARRAY[$IDX]} | tr -d " ") # extract element via 0-based index & delete whitespace
+
+    let IDX+=1 # adjust 0-based index via arithmetic expression to 1-based count
 
     IFS=';' read -r -a INFO <<< "$CURRENT" # split entry into array by delimiter
     
     KEY="${INFO[0]}"; FLAG="${INFO[1]}"; ARG="${INFO[2]}" # extract entry info
-
-    let IDX+=1 # adjust 0-based index via arithmetic expression to 1-based count
 
 
 
@@ -65,33 +63,51 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
     if [ "$IDX" -lt "${#ARRAY[@]}" ]; then # 1-based count less than array length
     
+        echo "*** $KEY: $ARG ***"
+    
         if [ -z $ARG ]; then # profile or component not parsed
 
             echo "!!! No $KEY Selected !!!"; exit 0 # raise error & exit
         
         else # profile or component parsed
-        
-            echo "*** $KEY: $ARG ***"; COMMAND+=" $FLAG $ARG" # log parsed settings
+
+            if [ "$IDX" -eq 2 ]; then # component parsed
+
+                ARG=($(ls -1 $PARAMDIR/$ARG.{json,yaml} 2> /dev/null)) # list component parameters found with error suppressed
+
+                if [ -z $ARG ]; then # no component parameters found
+
+                    echo "!!! No Parameters Found !!!"; exit 0 # raise error & exit
+
+                elif [ "${#ARG[@]}" -gt 1 ]; then # both json & yaml component parameters found
+
+                    echo "!!! Multiple Parameters Found !!!"; printf "%s\n" "${ARG[@]}"; exit 0 # raise error & exit
+                    
+                fi # argument checks; PARAMETERS
+
+            fi # argument checks; COMPONENT
+
+            COMMAND+=" $FLAG $ARG" # log parsed settings
 
         fi # argument checks; INITIAL
 
-
+    
 
     ####################
     # FINAL ARGUMENT
     ####################
 
     else # 1-based count equals array length
-    
-        #NF_WORK_SUBDIR="work-$SESSION_TAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
 
-        NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/launch-$SESSION_TAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
+        #NF_WORK_SUBDIR="work-$PARAMTAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
+
+        NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/launch-$PARAMTAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
 
         if [ -z $ARG ]; then # previous launch directory not parsed
 
             echo "*** Starting New Run ***"
             
-            NF_LAUNCH_SUBDIR+="_$(date '+%Y%m%d-%H%M%S')" # label launch directory with datetime
+            NF_LAUNCH_SUBDIR+="_$(date '+%Y%m%d%H%M%S')" # label launch directory with datetime
 
         else # previous launch directory parsed
 

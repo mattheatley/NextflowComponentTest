@@ -7,7 +7,7 @@ nextflow.enable.dsl = 2
 start_message = """
  ------------------------ 
       NEXTFLOW TESTING    
-  WORKFLOW START MESSAGE  
+       WORKFLOW START  
  ------------------------ 
 """
 println(start_message)
@@ -37,7 +37,7 @@ println("\n${INDENT}PROFILE:\n")
 println("\tconfig profile:   ${workflow.profile}")
 println("\tcontainer engine: ${workflow.containerEngine}")
 
-println("\n${INDENT}TESTING:\n") 
+println("\n${INDENT}RUNNING:\n") 
 println("\tcomponent: ${params.component}")
 
 
