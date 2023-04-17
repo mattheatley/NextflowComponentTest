@@ -146,3 +146,6 @@ printf "\n>>> Launching From: $(pwd)\n"
 printf "\nEXECUTING: $COMMAND\n\n"
 eval $COMMAND
 
+# plot latest dag via graphviz
+DAG=$(ls -t logs/reports*/*.dot | head -n 1)
+eval "dot -Tpdf $DAG -O"
