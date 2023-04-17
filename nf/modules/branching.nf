@@ -1,9 +1,11 @@
 
+
 /* WORKFLOW DEFINITION */
 
 workflow MODULE_WORKFLOW {
     
-    
+    println "\tSEE DAG FOR BRANCHING OVERVIEW\n"
+ 
     /* generate inputs */
 
         List SoftwareTags = [
@@ -26,13 +28,10 @@ workflow MODULE_WORKFLOW {
 
         Samples  = Channel.fromList( 1..3 )
 
-
-    /* generate combinations */
-
         CartesianProducts = Software.combine(Samples)
 
 
-    /* split branches */
+    /* process branches */
 
         Branches1 = CartesianProducts.branch{ software, sample ->
             softwareA:  software.toString().equals(SoftwareA)
@@ -40,9 +39,6 @@ workflow MODULE_WORKFLOW {
             softwareC:  software.toString()equals(SoftwareC)
             //unassigned: true
             }
-
-
-    /* process branches */
 
         Process1A = Branches1.softwareA.map{ software, sample -> 
             tuple( "ProcessA", software, sample ) }
@@ -53,18 +49,19 @@ workflow MODULE_WORKFLOW {
         Process1C = Branches1.softwareC.map{ software, sample -> 
             tuple( "ProcessC", software, sample ) }
 
-        Process1 = Process1A.concat(Process1B, Process1C)
+        Outputs1 = Process1A.concat(Process1B, Process1C)
 
 
     /* split branches (again) */
 
-        Branches2 = Process1.multiMap{ process, software, sample -> 
-            softwareX: tuple( "${process}X", software, sample )
-            softwareY: tuple( "${process}Y", software, sample )
-            //unassigned: true
+        Branches2 = Outputs1.multiMap{ process1, software, sample -> 
+            functionX: tuple( "FunctionX", process1, software, sample )
+            functionY: tuple( "FunctionY", process1, software, sample )
             }
 
-    println "\tSEE DAG IN LOGS FOR BRANCHING INFO\n"
+        Outputs2 = Branches2.functionX.concat(Branches2.functionY)
+
+        Outputs2.view()
 
     }
     
