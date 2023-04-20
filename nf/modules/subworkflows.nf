@@ -94,9 +94,9 @@ process PROCESS_1 {
               "SubWorkflowA Output (named): ${info}"}
         
          SUBWORKFLOW_B.out[0].view{ info -> 
-             "SubWorkflowB Tag (array): ${info}"}
+             "SubWorkflowB Tag (array element): ${info}"}
          SUBWORKFLOW_B.out[1].view{ info -> 
-             "SubWorkflowB Output (array): ${info}"}
+             "SubWorkflowB Output (array element): ${info}"}
 
         }
         
