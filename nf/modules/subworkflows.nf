@@ -8,11 +8,11 @@ process PROCESS_1 {
         val(ProcessInput)
 
     output:
-        val(ProcessOutput)
+        val(ProcessModification), emit: ProcessOutput
 
     exec:
 
-        ProcessOutput = "${ProcessTag}-${ProcessInput}"
+        ProcessModification = "${ProcessTag}-${ProcessInput}"
 
     }
 
@@ -23,18 +23,21 @@ process PROCESS_1 {
 
     workflow SUBWORKFLOW_A {
 
-        take: // as input? i.e. channel or string/int etc
+        take: 
             WorkflowInput
-              // N.B. documentation implies converted to channel
+        // N.B. taken as provided? i.e. channel or type (i.e. string/int etc)
+        // documentation implies type converted to value channel but behaviour not obvious
 
         main:
             println "SubWorkflowA Input Class: ${WorkflowInput.getClass()}"
             WorkflowInput  = WorkflowInput ?: "DefaultA"
-            WorkkflowTag   = "TagA"
-            WorkflowOutput = PROCESS_1(WorkkflowTag, WorkflowInput)
+            WorkflowTag    = "TagA"
+            PROCESS_1(WorkflowTag, WorkflowInput)
 
-        emit: // as channel (if not already)
-            WorkflowOutput
+        emit: // named outputs
+            WorkflowTag
+            WorkflowOutput = PROCESS_1.out.ProcessOutput
+        // N.B. emmited as channel (if not already)
     }
 
     workflow SUBWORKFLOW_B {
@@ -45,25 +48,39 @@ process PROCESS_1 {
         main:
             println "SubWorkflowB Input Class: ${WorkflowInput.getClass()}"
             WorkflowInput  = WorkflowInput ?: "DefaultB"
-            WorkkflowTag   = "TagB"
-            WorkflowOutput = PROCESS_1(WorkkflowTag, WorkflowInput)
+            WorkflowTag    = "TagB"
+            PROCESS_1(WorkflowTag, WorkflowInput)
 
-        emit:
-            WorkflowOutput
+        emit: // array outputs
+            "TagB"
+            PROCESS_1.out.ProcessOutput
     }
+
 
 
 /* WORKFLOW DEFINITION */
 
     workflow MODULE_WORKFLOW {
 
-        SUBWORKFLOW_A(channel.value(GlobalInput))
-        SUBWORKFLOW_A.out.WorkflowOutput.view{ info -> 
-            "SubWorkflowA: ${info}"}
 
-        SUBWORKFLOW_B(GlobalInput)
-        SUBWORKFLOW_B.out.WorkflowOutput.view{ info -> 
-            "SubWorkflowB: ${info}"}
+        /* SUBWORKFLOW INVOCATION */
+
+          SUBWORKFLOW_A(channel.value(GlobalInput))
+
+          SUBWORKFLOW_B(GlobalInput)
+
+
+
+          SUBWORKFLOW_A.out.WorkflowTag.view{ info -> 
+              "SubWorkflowA Tag (named): ${info}"}
+          SUBWORKFLOW_A.out.WorkflowOutput.view{ info -> 
+              "SubWorkflowA Output (named): ${info}"}
+        
+
+         SUBWORKFLOW_B.out[0].view{ info -> 
+             "SubWorkflowB Tag (array): ${info}"}
+         SUBWORKFLOW_B.out[1].view{ info -> 
+             "SubWorkflowB Output (array): ${info}"}
 
         }
         
