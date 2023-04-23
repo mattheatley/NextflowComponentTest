@@ -40,26 +40,27 @@
 
 
 
-/* IMPORT COMPONENTS */
+/* IMPORT SUBWORKFLOW */
 
-    moduleDir = "../modules" // "${workflow.projectDir}/modules"
+    // "${workflow.projectDir}/subworkflows/local"
+    subworkflowDir = "../subworkflows/local"
 
     include { 
 
-        MODULE_WORKFLOW as Component
+        SUBWORKFLOW as COMPONENT
 
-        } from "${moduleDir}/${params.component}"
+        } from "${subworkflowDir}/${params.component}"
 
         /* N.B. .nf extension ignored for component module & workflow files */
 
 
 
-/* RUN WORKFLOW */
+/* RUN SUBWORKFLOW */
 
     workflow IndividualWorkflow { 
         
         println("\n${INDENT}RUNNING WORKFLOW...\n")
 
-        Component() 
+        COMPONENT() 
 
         }

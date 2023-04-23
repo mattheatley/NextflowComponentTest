@@ -1,4 +1,19 @@
 
 {
-    "component"   : "tar"
+    "component" : "tar",
+
+    "tarMode"   : "x",
+
+    "tarZ"      : true,
+    
+    "InputDir"  : "/Users/matt/Desktop/NextflowComponentTest/tarInputs/Archived",
+    
+    "InputType" : "file",
+    
+    "InputGlob" : "*",
+    
+    "DEBUG"     : false,
+    
+    "mvInputs"  : false
+
 }

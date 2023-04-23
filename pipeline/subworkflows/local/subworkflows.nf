@@ -1,23 +1,24 @@
 
-/* PROCESS DEFINITION */
+/* MODULE DEFINITION */
 
-process PROCESS_1 {
+    process MODULE {
 
-    input:
-        val(ProcessTag)
-        val(ProcessInput)
+        input:
+            val(ProcessTag)
+            val(ProcessInput)
 
-    output:
-        val(ProcessModification), emit: ProcessOutput
+        output:
+            val(ProcessModification), emit: ProcessOutput
 
-    exec:
+        exec:
 
-        ProcessModification = "${ProcessTag}-${ProcessInput}"
+            ProcessModification = "${ProcessTag}-${ProcessInput}"
 
-    }
+        }
 
 
-/* SUBWORKFLOW DEFINITION */
+
+/* ADDITIONAL SUBWORKFLOW DEFINITION */
 
     GlobalInput = "ABC"
 
@@ -36,7 +37,7 @@ process PROCESS_1 {
 
             WorkflowTag   = "TagA"
 
-            PROCESS_1(
+            MODULE(
                 WorkflowTag, 
                 WorkflowInput )
 
@@ -44,7 +45,7 @@ process PROCESS_1 {
 
             WorkflowTag
 
-            WorkflowOutput = PROCESS_1.out.ProcessOutput
+            WorkflowOutput = MODULE.out.ProcessOutput
 
         // N.B. emmited as channel (if not already)
     }
@@ -62,7 +63,7 @@ process PROCESS_1 {
 
             WorkflowTag   = "TagB"
 
-            PROCESS_1(
+            MODULE(
                 WorkflowTag, 
                 WorkflowInput )
 
@@ -70,18 +71,17 @@ process PROCESS_1 {
 
             "TagB"
 
-            PROCESS_1.out.ProcessOutput
+            MODULE.out.ProcessOutput
 
     }
 
 
 
-/* WORKFLOW DEFINITION */
+/* SUBWORKFLOW DEFINITION */
 
-    workflow MODULE_WORKFLOW {
+    workflow SUBWORKFLOW {
 
-
-        /* SUBWORKFLOW INVOCATION */
+        /* ADDITIONAL SUBWORKFLOW INVOCATION */
 
           SUBWORKFLOW_A(channel.value(GlobalInput))
 

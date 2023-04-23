@@ -10,8 +10,8 @@
 ----------------------------------------------------------------------------------------
 */
 
-/* enable dsl syntax extension (should be applied by default) */
-nextflow.enable.dsl = 2
+    /* enable dsl syntax extension (should be applied by default) */
+    nextflow.enable.dsl = 2
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -19,8 +19,8 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-/* nf-core functions from ${workflow.projectDir}/lib/ */
-// WorkflowMain.initialise(workflow, params, log)
+    /* nf-core functions from ${workflow.projectDir}/lib/ */
+    // WorkflowMain.initialise(workflow, params, log)
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -28,18 +28,19 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflowDir = "${workflow.projectDir}/workflows"
+    workflowDir = "${workflow.projectDir}/workflows"
 
-include { IndividualWorkflow } from "${workflowDir}/ComponentTester"
+    include { IndividualWorkflow } from "${workflowDir}/ComponentTest"
 
 //
 // WORKFLOW: Run main nf-core/template analysis pipeline
 //
-workflow AllWorkflows {
 
-    IndividualWorkflow()
+    workflow AllWorkflows {
 
-}
+        IndividualWorkflow()
+
+    }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -51,11 +52,12 @@ workflow AllWorkflows {
 // WORKFLOW: Execute a single named workflow for the pipeline
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
-workflow {
 
-    AllWorkflows()
+    workflow {
 
-}
+        AllWorkflows()
+
+    }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
