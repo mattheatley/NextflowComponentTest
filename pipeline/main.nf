@@ -10,6 +10,7 @@
 ----------------------------------------------------------------------------------------
 */
 
+/* enable dsl syntax extension (should be applied by default) */
 nextflow.enable.dsl = 2
 
 /*
