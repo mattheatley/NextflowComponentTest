@@ -1,61 +1,63 @@
+#!/usr/bin/env nextflow
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    nf-core/template
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    Github : https://github.com/nf-core/template
 
-/* SETUP */ 
+    Website: https://nf-co.re/template
+    Slack  : https://nfcore.slack.com/channels/template
+----------------------------------------------------------------------------------------
+*/
 
-// enable dsl syntax extension (should be applied by default)
 nextflow.enable.dsl = 2
 
-INDENT = '   '
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    VALIDATE & PRINT PARAMETER SUMMARY
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
-start_message = """
-${INDENT}------------------------ 
-${INDENT}     NEXTFLOW TESTING    
-${INDENT}      WORKFLOW START  
-${INDENT}------------------------ 
-"""
-println(start_message)
+/* nf-core functions from ${workflow.projectDir}/lib/ */
+// WorkflowMain.initialise(workflow, params, log)
 
-if( !params.component ) { 
-    println("\tNO COMPONENT PROVIDED\n")
-    System.exit(0)
-    } 
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    NAMED WORKFLOW FOR PIPELINE
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
+workflowDir = "${workflow.projectDir}/workflows"
 
+include { IndividualWorkflow } from "${workflowDir}/ComponentTester"
 
-/* WORKFLOW INTROSPECTION */
+//
+// WORKFLOW: Run main nf-core/template analysis pipeline
+//
+workflow AllWorkflows {
 
-println("\n${INDENT}WORKFLOW:\n")
-println("\tscipt name:   ${workflow.scriptName}")
-println("\trevision:     ${workflow.revision}")
-println("\texecuting:    ${workflow.commandLine}")
-println("\trun name:     ${workflow.runName}")
-println("\tsession id:   ${workflow.sessionId}")
-println("\tlaunch dir:   ${workflow.launchDir}")   // working directory (pwd)
-println("\tproject dir:  ${workflow.projectDir}")  // projectDIR/workflow.nf
-println("\twork dir:     ${workflow.workDir}")     // launchDIR/work (-w)
-println("\tconfig files: ${workflow.configFiles}")
+    IndividualWorkflow()
 
-println("\n${INDENT}PROFILE:\n")
-println("\tconfig profile:   ${workflow.profile}")
-println("\tcontainer engine: ${workflow.containerEngine}")
+}
 
-println("\n${INDENT}RUNNING:\n") 
-println("\tcomponent: ${params.component}")
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    RUN ALL WORKFLOWS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
 
+//
+// WORKFLOW: Execute a single named workflow for the pipeline
+// See: https://github.com/nf-core/rnaseq/issues/619
+//
+workflow {
 
+    AllWorkflows()
 
-/* IMPORT COMPONENTS */
+}
 
-moduleDir = "${workflow.projectDir}/modules"
-
-include { 
-    MODULE_WORKFLOW as CURRENT_WORKFLOW
-    } from "${moduleDir}/${params.component}"
-    /* N.B. .nf extension ignored for component module & workflow files */
-
-
-
-/* RUN WORKFLOW */
-
-println("\n${INDENT}RUNNING WORKFLOW...\n")
-
-workflow { CURRENT_WORKFLOW() }
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    THE END
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
