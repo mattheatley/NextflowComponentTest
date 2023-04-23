@@ -31,12 +31,12 @@
     println("\twork dir:     ${workflow.workDir}")     // launchDIR/work (-w)
     println("\tconfig files: ${workflow.configFiles}")
 
-    println("\n${INDENT}PROFILE:\n")
+    println("\n${INDENT}SYSTEM:\n")
     println("\tconfig profile:   ${workflow.profile}")
     println("\tcontainer engine: ${workflow.containerEngine}")
 
-    println("\n${INDENT}RUNNING:\n") 
-    println("\tcomponent: ${params.component}")
+    println("\n${INDENT}SETTINGS:\n") 
+    println("\tparameters: ${params.component}")
 
 
 
