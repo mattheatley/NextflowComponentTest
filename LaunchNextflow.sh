@@ -4,7 +4,31 @@
 # individual launch directory avoids session .nextflow conflict on resume
 
 # usage:
-# bash LaunchNextflow.sh PROFILE COMPONENT [PREVIOUS_LAUNCH_DIRECTORY] 
+# bash LaunchNextflow.sh PROFILE PARAMETERS [PREVIOUS_LAUNCH_SUBDIRECTORY] 
+
+
+####################
+# DEPENDENCIES
+####################
+
+# activate user environment
+# source $HOME/.bash_profile
+
+# alter permissions for newly created files (default: umask 0027)
+# umask 0022
+
+# specify/activate nextflow conda environment
+# CONDA_ENV="nf-core_v2.6_env"
+# conda activate $CONDA_ENV
+
+# specify/load singularity environment module
+# SINGULARITY_MOD="singularity/3.4.2"
+# module load $SINGULARITY_MOD
+
+# remove singularity cache directory layers; ~/.singularity/cache
+# singularity cache clean -f
+# remove nextflow singularity cache images; cacheDir
+# rm -r ./singularity
 
 
 
@@ -14,7 +38,7 @@
 
 printf "\nRunning Launch Script\n\n"
 
-PIPEDIR="$(pwd)/nf"
+PIPEDIR="$(pwd)/pipeline"
 
 WORKFLOW="$PIPEDIR/main.nf"
 
@@ -25,7 +49,6 @@ PARAMDIR="$PIPEDIR/params"
 PARAMTAG="$2"
 
 
-
 # define basic command
 
 COMMAND="nextflow -C $CONFIG run $WORKFLOW"
@@ -33,9 +56,9 @@ COMMAND="nextflow -C $CONFIG run $WORKFLOW"
 # define argument info
 
 #       "KEY       ; FLAG         ; ARG"
-ARRAY=( "System    ; -profile     ; $1"
-        "Component ; -params-file ; $2"
-        "Mode      ; -resume      ; $3" )
+ARRAY=( "System   ; -profile     ; $1"
+        "Settings ; -params-file ; $2"
+        "Mode     ; -resume      ; $3" )
 
 
 
@@ -63,27 +86,27 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
     
         echo "*** $KEY: $ARG ***"
     
-        if [ -z $ARG ]; then # profile or component not parsed
+        if [ -z $ARG ]; then # profile or parameters not parsed
 
             echo "!!! No $KEY Selected !!!"; exit 0 # raise error & exit
         
-        else # profile or component parsed
+        else # profile or parameters parsed
 
-            if [ "$IDX" -eq 2 ]; then # component parsed
+            if [ "$IDX" -eq 2 ]; then # parameters parsed
 
-                ARG=($(ls -1 $PARAMDIR/$ARG.{json,yaml} 2> /dev/null)) # list component parameters found with error suppressed
+                ARG=($(ls -1 $PARAMDIR/$ARG.{json,yaml} 2> /dev/null)) # list parameters found with error suppressed
 
-                if [ -z $ARG ]; then # no component parameters found
+                if [ -z $ARG ]; then # no parameters found
 
                     echo "!!! No Parameters Found !!!"; exit 0 # raise error & exit
 
-                elif [ "${#ARG[@]}" -gt 1 ]; then # both json & yaml component parameters found
+                elif [ "${#ARG[@]}" -gt 1 ]; then # both json & yaml parameters found
 
                     echo "!!! Multiple Parameters Found !!!"; printf "%s\n" "${ARG[@]}"; exit 0 # raise error & exit
                     
-                fi # argument checks; PARAMETERS
+                fi # input checks; SETTINGS
 
-            fi # argument checks; COMPONENT
+            fi # argument checks; SETTINGS
 
             COMMAND+=" $FLAG $ARG" # log parsed settings
 
@@ -123,7 +146,7 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
                 NF_LAUNCH_SUBDIR=$NF_LAUNCH_PREVIOUS; COMMAND+=" $FLAG" # specify launch directory branch
 
-            fi # mode checks; RESUME
+            fi # input checks; RESUME
 
         fi # mode type; START|RESUME
 
