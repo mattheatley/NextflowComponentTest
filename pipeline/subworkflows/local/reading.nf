@@ -3,6 +3,11 @@
 
     process CreateMatrix {
 
+        publishDir path : params.publishDir,
+                pattern : "*.csv",
+                   mode : "copy",
+              overwrite : true
+
         input:
             tuple val(rows), val(cols), val(sep)
 
