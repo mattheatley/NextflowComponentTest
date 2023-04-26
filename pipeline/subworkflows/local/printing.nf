@@ -4,7 +4,7 @@
     workflow SUBWORKFLOW {
 
 
-        print "\nsPrinting via Print"
+        print "\nPrinting via Print"
 
         println "\nPrinting via Println"
 
