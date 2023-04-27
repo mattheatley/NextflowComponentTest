@@ -50,7 +50,7 @@ CONFIG="$PIPEDIR/nextflow.config"
 
 PARAMDIR="$PIPEDIR/params"
 
-PARAMTAG="$2"
+LAUNCHTAG="launch_${1}_${2}"
 
 
 # define basic command
@@ -124,9 +124,9 @@ for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
 
     else # 1-based count equals array length
 
-        #NF_WORK_SUBDIR="work-$PARAMTAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
+        #NF_WORK_SUBDIR="work-$LAUNCHTAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
 
-        NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/launch-$PARAMTAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
+        NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/$LAUNCHTAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
 
         if [ -z $ARG ]; then # previous launch directory not parsed
 
