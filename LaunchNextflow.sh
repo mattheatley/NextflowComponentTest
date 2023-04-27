@@ -171,7 +171,7 @@ printf "\n>>> Launching From: $(pwd)\n"
 
 # execute nextflow command 
 printf "\nEXECUTING: $COMMAND\n\n"
-#eval $COMMAND
+eval $COMMAND
 
 
 
