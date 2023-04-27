@@ -19,7 +19,7 @@
         script:
             """
             echo "Processing: ${Input}"
-            cowsay "Processing ${Input}" > ${Input}.txt
+            cowsay "MOO ${Input}" > ${Input}.txt
             """
         }
 

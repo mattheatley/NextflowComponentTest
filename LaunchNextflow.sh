@@ -14,22 +14,26 @@
 # activate user environment
 # source $HOME/.bash_profile
 
-# alter permissions for newly created files (default: umask 0027)
-# umask 0022
-
 # specify/activate nextflow conda environment
 # CONDA_ENV="nf-core_v2.6_env"
 # conda activate $CONDA_ENV
 
-# specify/load singularity environment module
-# SINGULARITY_MOD="singularity/3.4.2"
-# module load $SINGULARITY_MOD
+# UoN-specific singularity steps
+if [[ "$1" == "augusta" ]]; then
+
+    # alter permissions for newly created files (default: umask 0027)
+    umask 0022
+
+    # specify/load singularity environment module
+    SINGULARITY_MOD="singularity/3.4.2"
+    module load $SINGULARITY_MOD
+
+fi
 
 # remove singularity cache directory layers; ~/.singularity/cache
 # singularity cache clean -f
 # remove nextflow singularity cache images; cacheDir
 # rm -r ./singularity
-
 
 
 ####################
@@ -167,7 +171,7 @@ printf "\n>>> Launching From: $(pwd)\n"
 
 # execute nextflow command 
 printf "\nEXECUTING: $COMMAND\n\n"
-eval $COMMAND
+#eval $COMMAND
 
 
 
