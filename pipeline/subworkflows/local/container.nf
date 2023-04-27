@@ -9,9 +9,7 @@
                 pattern : "*.txt",
                    mode : "copy",
               overwrite : true
-        
-        debug true
-        
+                
         input:
             val(Input)
 
