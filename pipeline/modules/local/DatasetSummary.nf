@@ -5,11 +5,6 @@
 
         container = 'staphb/ncbi-datasets:14.20.0'
         
-        publishDir path : "${params.publishDir}/summary",
-                pattern : "*.jsonl",
-                   mode : "copy",
-              overwrite : true
-
         input:
             val(taxon)
 
