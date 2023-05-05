@@ -1,0 +1,14 @@
+
+{
+                "component" : "ncbi-datasets",
+
+            "ncbi_download" : true,
+
+              "ncbi_taxons" : "Cedecea,Lelliottia,Kosakonia cowanii,NOTAXON",
+               "ncbi_jsonl" : true,
+     "ncbi_assembly_levels" : "chromosome,complete,contig,scaffold",
+     "ncbi_assembly_source" : "all",
+    "ncbi_exclude_atypical" : false,
+                 "ncbi_mag" : "all",
+           "ncbi_reference" : true
+}
