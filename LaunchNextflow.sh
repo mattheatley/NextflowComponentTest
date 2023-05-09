@@ -42,7 +42,9 @@ fi
 
 printf "\nRunning Launch Script\n\n"
 
-PIPEDIR="$(pwd)/pipeline"
+STARTDIR="$(pwd)"
+
+PIPEDIR="$STARTDIR/pipeline"
 
 WORKFLOW="$PIPEDIR/main.nf"
 
@@ -183,7 +185,7 @@ DOT=$(which dot) # check graphviz installed latest dag with error suppressed
 
 DAG=$(ls -t logs/reports*/*.dot 2> /dev/null | head -n 1) # list latest dag with error suppressed
 
-if [ -z $DOT ]; then # DAG not generated
+if [ -z $DOT ]; then # dot not installed
 
     echo "*** Graphviz not installed ***"; exit 0 # raise error & exit
 
@@ -196,6 +198,10 @@ else # DAG generated
     # execute graphviz command
     COMMAND="dot -Tpdf $DAG -O"
     printf "\nEXECUTING: $COMMAND\n\n"
+    eval $COMMAND
+
+    # publish latest dag
+    COMMAND="cp ${DAG}.pdf $STARTDIR/latest_dag.pdf"
     eval $COMMAND
 
 fi # argument checks; DAG
