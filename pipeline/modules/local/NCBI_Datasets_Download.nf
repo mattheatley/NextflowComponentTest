@@ -1,14 +1,14 @@
 
 /* DOWNLOAD ACCESSION NCBI DATASETS GENOME */
 
-    process DatasetDownload {
+    process NCBI_Datasets_Download {
 
         container = 'staphb/ncbi-datasets:14.20.0'
         
         publishDir path : "${params.publishDir}/genome",
                 pattern : "ncbi_dataset/data/*/*.fna",
-                 saveAs : { path -> 
-                    "${taxon_tag}/${accession}/${file(path).getName()}" },
+                 saveAs : { download -> 
+                    "${fasta_dir}/${file(download).getName()}" },
                    mode : "copy",
               overwrite : true
 
@@ -16,11 +16,13 @@
             tuple val(taxon), val(accession)
 
         output:
-            tuple val(taxon), val(accession), path("ncbi_dataset/data/*/*.fna"), emit: Sublist
+            tuple val(fasta_dir), path("ncbi_dataset/data/*/*.fna"), emit: Sublist
 
         script:
 
             taxon_tag = taxon.replaceAll( "\\s", "_" )
+
+            fasta_dir = "${taxon_tag}/${accession}"
 
             """
             # download genome zip archive

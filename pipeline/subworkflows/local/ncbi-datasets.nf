@@ -6,79 +6,104 @@
 
 /* MODULES IMPORT */
 
-    include { DatasetSummary } from '../../modules/local/DatasetSummary'
+    moduleDir = "../../modules"
 
-    include { Jsonl2Table    } from '../../modules/local/Jsonl2Table'
+    include { NCBI_Datasets_Summary as Summary } from "${moduleDir}/local/NCBI_Datasets_Summary"
 
-    include { DatasetDownload } from '../../modules/local/DatasetDownload'
+    include { Jsonl_2_Table as Tabulate  } from "${moduleDir}/local/Jsonl_2_Table"
+
+    include { NCBI_Datasets_Download as Download } from "${moduleDir}/local/NCBI_Datasets_Download"
 
 
-/* SUBWORKFLOW DEFINITION */
 
-    workflow SUBWORKFLOW {
-        
+/* WORKFLOW DEFINITION */
+
+    workflow SUBWORKFLOW { 
+                
         println "\tDOWNLOADING NCBI GENOME INFO\n"
-    
+
+
         /* process taxon parameter */
 
             // split comma delimited argument
-            TaxonList = params.ncbi_taxons.split(',')
+            TaxonsList = params.ncbi_taxons.split(',')
 
             // convert to lowercase
-            TaxonList = TaxonList.collect{ it.toLowerCase() }
+            TaxonsList = TaxonsList.collect{ it.toLowerCase() }
 
             // remove duplicates
-            TaxonList = TaxonList.unique()
+            TaxonsList = TaxonsList.unique()
+
+            // create channel
+            Channel.fromList( TaxonsList ).set{ Taxons }
 
 
         /* query taxon genomes */
 
-            DatasetSummary( Channel.fromList( TaxonList ) )
+            // submit queries
+            Summary( Taxons )
 
 
-        /* group available/unavailable taxons */
+        /* group taxons by availability */
 
-            DatasetSummary.out.Sublist.branch{ taxon, json, count ->
-                available:   !count.toInteger().equals(0)
-                unavailable: true
-                }.set{ DatasetSummaryGroups }
+            Summary.out.Sublist.branch{ taxon, json, count ->
 
-            DatasetSummaryGroups.available.view{ taxon, json, count ->
-                "Taxon \"${taxon}\" records: ${count}" }
+                Available:   
+                    !count.toInteger().equals(0)
+                    return tuple( taxon, json, count )
+            
+                Unavailable: 
+                    true
+                    return taxon
+            
+                }.set{ SummaryGroups }
 
-            DatasetSummaryGroups.unavailable.view{ taxon, json, count ->
-                "Taxon \"${taxon}\" unavailable" }
+            // log unavailable taxons
+            SummaryGroups.Unavailable.collectFile(
+                   name : "${params.publishDir}/taxons-unavailable.txt",  
+                newLine : true 
+                ){ taxon -> "${taxon}" }
 
+            // log available taxons        
+            SummaryGroups.Available.collectFile(
+                name : "${params.publishDir}/taxons-available.txt",  
+                newLine : true 
+                ){ taxon, json, count -> "${taxon}:${count}" }
 
         /* process available taxons */
-           
+
             // convert summary to table
-            Jsonl2Table( DatasetSummaryGroups.available )
+            Tabulate( SummaryGroups.Available )
+
 
             // extract accessions from table
-            Jsonl2Table.out.Sublist.map{ taxon, table -> 
+            Tabulate.out.Sublist.flatMap{ taxon, jsonl, table -> 
 
                 accessions = table.splitCsv( 
                     header : true,
                       skip : 0,
                        sep : '\t' 
                     ).collect{ entry -> 
-                        entry.accession }
+                        tuple( taxon, entry.accession ) }
                 
-                // return
-                tuple(taxon, accessions)
+                return accessions
 
-                }.transpose().set{ AccessionsList }
+                }.set{ Accessions }
 
 
         /* download available accessions */
 
             if( params.ncbi_download ) {
             
-                DatasetDownload( AccessionsList )
+                // start downloads
+                Download( Accessions ) 
+                
+                // log downloaded genomes
+                Download.out.Sublist.collectFile(
+                    name : "${params.publishDir}/accessions-available.txt",  
+                    newLine : true 
+                    ){ fasta_dir, download -> "${fasta_dir}/${download.getName()}" }
 
-                DatasetDownload.out.Sublist.collect{ taxon, accession, genome -> 
-                    accession }
                 }
-        
+
         }

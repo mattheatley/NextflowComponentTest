@@ -30,15 +30,15 @@
 
     workflowDir = "${workflow.projectDir}/workflows"
 
-    include { IndividualWorkflow } from "${workflowDir}/ComponentTest"
+    include { IndividualWorkflow as Tester } from "${workflowDir}/ComponentTest"
 
 //
 // WORKFLOW: Run main nf-core/template analysis pipeline
 //
 
-    workflow AllWorkflows {
+    workflow Main {
 
-        IndividualWorkflow()
+        Tester()
 
     }
 
@@ -55,7 +55,7 @@
 
     workflow {
 
-        AllWorkflows()
+        Main()
 
     }
 

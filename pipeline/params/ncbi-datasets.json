@@ -4,7 +4,7 @@
 
             "ncbi_download" : true,
 
-              "ncbi_taxons" : "Cedecea,Lelliottia,Kosakonia cowanii,NOTAXON",
+              "ncbi_taxons" : "Cedecea,Lelliottia,Kosakonia cowanii,NOTAXON1,NOTAXON2,NOTAXON3",
                "ncbi_jsonl" : true,
      "ncbi_assembly_levels" : "chromosome,complete,contig,scaffold",
      "ncbi_assembly_source" : "all",

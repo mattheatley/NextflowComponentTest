@@ -1,10 +1,10 @@
 
 /* DOWNLOAD TAXON NCBI DATASETS GENOME SUMMARY */
 
-    process DatasetSummary {
+    process NCBI_Datasets_Summary {
 
         container = 'staphb/ncbi-datasets:14.20.0'
-        
+
         input:
             val(taxon)
 

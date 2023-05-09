@@ -47,7 +47,7 @@
 
     include { 
 
-        SUBWORKFLOW as COMPONENT
+        SUBWORKFLOW as Component
 
         } from "${subworkflowDir}/${params.component}"
 
@@ -61,6 +61,6 @@
         
         println("\n${INDENT}RUNNING WORKFLOW...\n")
 
-        COMPONENT() 
+        Component() 
 
         }
