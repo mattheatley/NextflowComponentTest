@@ -37,6 +37,7 @@
 
     println("\n${INDENT}SETTINGS:\n") 
     println("\tparameters: ${params.component}")
+    println("\tparameters: ${params}")
 
 
 

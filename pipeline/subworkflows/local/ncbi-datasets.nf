@@ -25,14 +25,41 @@
 
         /* process taxon parameter */
 
-            // split comma delimited argument
-            TaxonsList = params.ncbi_taxons.split(',')
+            // check taxons input format
+            assert params.ncbi_taxons
+
+            TaxonsFile = file(params.ncbi_taxons)
+
+            TaxonsInput = TaxonsFile.exists() ? TaxonsFile : params.ncbi_taxons
+
+            // process as file
+            if (TaxonsInput !instanceof String){
+
+                println "Taxons File Found"
+
+                // read lines in file
+                TaxonsList = TaxonsInput.splitText( 
+                    by : 1
+                    ).collect{ line -> line.trim() }
+                }
+
+            // process as string
+            else{
+
+                println "Taxons File Not Found"
+
+                // split comma delimited string
+                TaxonsList = params.ncbi_taxons.split(',')
+                }
 
             // convert to lowercase
-            TaxonsList = TaxonsList.collect{ it.toLowerCase() }
+            TaxonsList = TaxonsList.collect{ taxon -> taxon.toLowerCase() }
 
             // remove duplicates
             TaxonsList = TaxonsList.unique()
+
+            // remove empty lines
+            TaxonsList.removeAll([""])
 
             // create channel
             Channel.fromList( TaxonsList ).set{ Taxons }
@@ -66,7 +93,7 @@
 
             // log available taxons        
             SummaryGroups.Available.collectFile(
-                name : "${params.publishDir}/taxons-available.txt",  
+                   name : "${params.publishDir}/taxons-available.txt",  
                 newLine : true 
                 ){ taxon, json, count -> "${taxon}:${count}" }
 
@@ -100,7 +127,7 @@
                 
                 // log downloaded genomes
                 Download.out.Sublist.collectFile(
-                    name : "${params.publishDir}/accessions-available.txt",  
+                       name : "${params.publishDir}/accessions-available.txt",  
                     newLine : true 
                     ){ fasta_dir, download -> "${fasta_dir}/${download.getName()}" }
 
