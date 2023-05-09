@@ -179,11 +179,17 @@ eval $COMMAND
 # PLOT DAG
 ####################
 
+DOT=$(which dot) # check graphviz installed latest dag with error suppressed
+
 DAG=$(ls -t logs/reports*/*.dot 2> /dev/null | head -n 1) # list latest dag with error suppressed
 
-if [ -z $DAG ]; then # DAG not generated
+if [ -z $DOT ]; then # DAG not generated
 
-    echo "!!! No DAG Found !!!"; exit 0 # raise error & exit
+    echo "*** Graphviz not installed ***"; exit 0 # raise error & exit
+
+elif [ -z $DAG ]; then # DAG not generated
+
+    echo "*** No DAG Found ***"; exit 0 # raise error & exit
 
 else # DAG generated
 
