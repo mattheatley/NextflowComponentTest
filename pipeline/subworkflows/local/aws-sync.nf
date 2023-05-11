@@ -68,7 +68,7 @@
         /* specify transfer commands */
 
             // modulate command to comment if testing
-            modulator = params.test_run ? "#" : ""
+            modulator = params.dry_run ? "#" : ""
 
             // create collective transfer commands per chunk  
             TotalChunks.map{ chunk ->
@@ -88,7 +88,12 @@
 
             Sync( TransferCommands )
 
-            Sync.out.subscribe{ commands -> 
-                "executed: ${commands}"}
+            // shows commands executed
+            if (params.dry_run) {
+
+                Sync.out.subscribe{ commands -> 
+                    println "\ntransfers executed: ${commands}" }
+                
+                }
 
         }
