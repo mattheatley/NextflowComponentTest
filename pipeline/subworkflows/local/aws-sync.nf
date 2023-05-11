@@ -8,7 +8,10 @@
 
     moduleDir = "../../modules"
 
-    include { AWS_CLI_Sync as Sync } from "${moduleDir}/local/AWS_CLI_Sync"
+    include { 
+        AWS_CLI_Sync_Commands as Sync_Commands; 
+        AWS_CLI_Sync_Paths as Sync_Paths  
+        } from "${moduleDir}/local/AWS_CLI_Sync"
 
 
 /* WORKFLOW DEFINITION */
@@ -21,9 +24,9 @@
         /* search source directory */
 
             // extract source path components
-            SourcePath = file(params.source_path)
-            SourceBasename = SourcePath.getName()
-            SourceParent   = SourcePath.getParent()
+            SourcePath   = file(params.source_path)
+            SourceTarget = SourcePath.getName()
+            SourceParent = SourcePath.getParent()
 
             // get all directory contents
             FilesList = files("${params.source_path}/**")
@@ -36,11 +39,12 @@
 
             SourceContents.branch{ source ->
 
-                Target:   
+                Chunks:
+                    // extension matches that of target
                     source.getName().matches(".*\\.(${params.target_ext})\$")
                     return source
                 
-                Other: 
+                Remaining: 
                     true
                     return source
             
@@ -50,19 +54,19 @@
         /* group files into chunks */
 
             // group target files into multiple chunks
-            Contents.Target.collate( 
+            Contents.Chunks.collate( 
                 params.chunk_size, 
-                ).set{ TargetChunks }
+                ).set{ Chunks }
 
             // group remaining files into single chunk
-            Contents.Other.collect(
+            Contents.Remaining.collect(
                 flat : false
-                ).set{ OtherChunks }
+                ).set{ Remaining }
 
             // merge channels
-            OtherChunks.concat( 
-                TargetChunks 
-                ).set{ TotalChunks }
+            Remaining.concat( 
+                Chunks 
+                ).set{ BatchPaths }
 
 
         /* specify transfer commands */
@@ -71,7 +75,7 @@
             modulator = params.dry_run ? "#" : ""
 
             // create collective transfer commands per chunk  
-            TotalChunks.map{ chunk ->
+            BatchPaths.map{ chunk ->
 
                 chunk.collect{ source -> 
 
@@ -81,19 +85,21 @@
                     
                     }.join() 
 
-                    }.set{ TransferCommands }
+                    }.set{ BatchCommands }
 
 
         /* execute transfer */
 
-            Sync( TransferCommands )
+            Sync_Paths( BatchPaths )
+
+            //Sync_Commands( BatchCommands )
 
             // shows commands executed
-            if (params.dry_run) {
+            //if (params.dry_run) {
 
-                Sync.out.subscribe{ commands -> 
-                    println "\ntransfers executed: ${commands}" }
+            //    Sync.out.subscribe{ commands -> 
+            //        println "\ntransfers executed: ${commands}" }
                 
-                }
+            //    }
 
         }

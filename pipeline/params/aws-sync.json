@@ -4,7 +4,8 @@
 
                 "aws_profile" : "ont-gws-apps-benchmarking-prod",
                 "source_path" : "/Users/matt.heatley/Desktop/AWS_Test/",
-                "bucket_path" : "path/to/bucket",
+                "bucket_path" : "bucket-name",
+                "object_path" : "path/to/object",
                  "chunk_size" : 4,
                  "target_ext" : "fast5|fastq",
                     "dry_run" : true
