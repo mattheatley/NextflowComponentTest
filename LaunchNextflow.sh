@@ -201,7 +201,7 @@ else # DAG generated
     eval $COMMAND
 
     # publish latest dag
-    COMMAND="cp ${DAG}.pdf $STARTDIR/latest_dag.pdf"
+    COMMAND="cp ${DAG}.pdf $STARTDIR/dag_latest.pdf"
     eval $COMMAND
 
 fi # argument checks; DAG
