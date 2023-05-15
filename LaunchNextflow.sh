@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-# aim:
-# individual launch directory avoids session .nextflow conflict on resume
-
-# usage:
-# bash LaunchNextflow.sh PROFILE PARAMETERS [PREVIOUS_LAUNCH_SUBDIRECTORY] 
-
 
 ####################
 # DEPENDENCIES
@@ -40,11 +34,69 @@ fi
 # SETUP 
 ####################
 
-printf "\nRunning Launch Script\n\n"
+# specify help message
 
-STARTDIR="$(pwd)"
+showHelp() {
+    
+cat << EOF  
 
-PIPEDIR="$STARTDIR/pipeline"
+$1
+
+Usage: $(basename $0) -s <system> -p <settings> [-r <directory>]
+
+-h     Display help.
+
+-s     Specify nextflow config profile
+
+-p     Specify nextflow params-file
+
+-r     Specify previous directory to resume pipeline from
+
+EOF
+exit 0 
+}
+
+
+# specify defaults
+
+SETTINGS="default"
+
+
+# parse arguments
+
+while getopts ':hs:p:r:' OPT; do
+
+    case "$OPT" in
+
+        h) showHelp "Launch script to run & resume nextflow pipelines" ;;
+
+        s) PROFILE="$OPTARG" ;;
+
+        p) SETTINGS="$OPTARG" ;;
+
+        r) DIR2RESUME="$OPTARG" ;;
+
+        ?) showHelp "Error ~ Incorrect arguments provided" ;;
+    
+    esac
+
+done; shift "$(($OPTIND -1))"
+
+
+# extract directory label info
+
+if [ $DIR2RESUME ]; then
+
+    IFS=_ read -r TAG PROFILE SETTINGS DATETIME <<< "$DIR2RESUME"
+
+fi
+
+
+# specify working directory & pipeline struture
+
+WORKDIR="$(pwd)"
+
+PIPEDIR="$WORKDIR/pipeline"
 
 WORKFLOW="$PIPEDIR/main.nf"
 
@@ -52,156 +104,110 @@ CONFIG="$PIPEDIR/nextflow.config"
 
 PARAMDIR="$PIPEDIR/params"
 
-LAUNCHTAG="launch_${1}_${2}"
+
+# SYSTEM CHECKS
+
+if [ -z $PROFILE ]; then # no profile provided
+
+    showHelp "Error ~ System not provided: Check config file for available profiles; $CONFIG"
+
+fi
 
 
-# define basic command
+# SETTINGS CHECKS; TBC
 
-COMMAND="nextflow -C $CONFIG run $WORKFLOW"
+PARAMETERS=($(ls -1 $PARAMDIR/$SETTINGS.{json,yml,yaml} 2> /dev/null)) # list parameters found; error suppressed
 
-# define argument info
+if [ -z $PARAMETERS ]; then # no parameters provided
 
-#       "KEY       ; FLAG         ; ARG"
-ARRAY=( "System   ; -profile     ; $1"
-        "Settings ; -params-file ; $2"
-        "Mode     ; -resume      ; $3" )
+    showHelp "Error ~ Settings not found: Check parameter directory for available files; $PARAMDIR"
 
+elif [ "${#PARAMETERS[@]}" -gt 1 ]; then # multiple parameter formats found
 
-
-####################
-# PROCESS ARGUMENTS
-####################
-
-for IDX in "${!ARRAY[@]}" ; do # cycle array indicies...
-
-    CURRENT=$(echo ${ARRAY[$IDX]} | tr -d " ") # extract element via 0-based index & delete whitespace
-
-    let IDX+=1 # adjust 0-based index via arithmetic expression to 1-based count
-
-    IFS=';' read -r -a INFO <<< "$CURRENT" # split entry into array by delimiter
+    showHelp "Error ~ Multiple settings found: *** TBC *** ; $(printf "\n\n\t> %s" "${PARAMETERS[@]}")"
     
-    KEY="${INFO[0]}"; FLAG="${INFO[1]}"; ARG="${INFO[2]}" # extract entry info
+fi
 
 
+# RESUME CHECKS
 
-    ####################
-    # INITIAL ARGUMENTS
-    ####################
+# specify launch directory
+DIR2START="launch_${PROFILE}_${SETTINGS}"
 
-    if [ "$IDX" -lt "${#ARRAY[@]}" ]; then # 1-based count less than array length
-    
-        echo "*** $KEY: $ARG ***"
-    
-        if [ -z $ARG ]; then # profile or parameters not parsed
+NF_LAUNCH_DIR_NEW="$WORKDIR/$DIR2START"
 
-            echo "!!! No $KEY Selected !!!"; exit 0 # raise error & exit
-        
-        else # profile or parameters parsed
+NF_LAUNCH_DIR_OLD="$WORKDIR/$DIR2RESUME"
 
-            if [ "$IDX" -eq 2 ]; then # parameters parsed
+if [ -z $DIR2RESUME ]; then
 
-                ARG=($(ls -1 $PARAMDIR/$ARG.{json,yaml} 2> /dev/null)) # list parameters found with error suppressed
-
-                if [ -z $ARG ]; then # no parameters found
-
-                    echo "!!! No Parameters Found !!!"; exit 0 # raise error & exit
-
-                elif [ "${#ARG[@]}" -gt 1 ]; then # both json & yaml parameters found
-
-                    echo "!!! Multiple Parameters Found !!!"; printf "%s\n" "${ARG[@]}"; exit 0 # raise error & exit
-                    
-                fi # input checks; SETTINGS
-
-            fi # argument checks; SETTINGS
-
-            COMMAND+=" $FLAG $ARG" # log parsed settings
-
-        fi # argument checks; INITIAL
-
-    
-
-    ####################
-    # FINAL ARGUMENT
-    ####################
-
-    else # 1-based count equals array length
-
-        #NF_WORK_SUBDIR="work-$LAUNCHTAG"; COMMAND+=" -w $NF_WORK_SUBDIR" # specify work directory
-
-        NF_RUN_DIR="$(pwd)"; NF_LAUNCH_SUBDIR="$NF_RUN_DIR/$LAUNCHTAG"; NF_LAUNCH_PREVIOUS="$NF_RUN_DIR/$ARG" # specify launch directory
-
-        if [ -z $ARG ]; then # previous launch directory not parsed
-
-            echo "*** Starting New Run ***"
+    echo -e "\n*** Starting New Run ***"
             
-            NF_LAUNCH_SUBDIR+="_$(date '+%Y%m%d%H%M%S')" # label launch directory with datetime
+    NF_LAUNCH_SUBDIR="${NF_LAUNCH_DIR_NEW}_$(date '+%Y%m%d%H%M%S')" # label launch directory with datetime
 
-        else # previous launch directory parsed
+else
 
-            echo "*** Resuming Old Run ***"
+    echo -e "\n*** Resuming Old Run ***"
 
-            if [ ! -d $NF_LAUNCH_PREVIOUS ]; then # parsed launch directory not found
-                
-                echo "!!! No \"$ARG\" Directory to Resume"; exit 0 # raise error & exit
+    if [ ! -d $NF_LAUNCH_DIR_OLD ]; then # previous launch directory not found
+
+        showHelp "Error ~ Directory not found: Check working directory for available options; $WORKDIR"
             
-            elif [ ! $NF_LAUNCH_PREVIOUS == $NF_LAUNCH_SUBDIR* ]; then # parsed launch directory format does not conform
+    elif [ ! $NF_LAUNCH_DIR_OLD == ${NF_LAUNCH_DIR_NEW}_* ]; then # previous launch directory format unexpected
 
-                echo "!!! \"$ARG\" Incompatible With \"$(basename $NF_LAUNCH_SUBDIR)\" !!!"; exit 0 # raise error & exit
+        showHelp "Error ~ Directory format unexpected: Check prefix matches \"$(basename $NF_LAUNCH_DIR_NEW)\"; $NF_LAUNCH_DIR_OLD"
         
-            else # parsed launch directory found & formatted correctly
+    else
 
-                NF_LAUNCH_SUBDIR=$NF_LAUNCH_PREVIOUS; COMMAND+=" $FLAG" # specify launch directory branch
+        NF_LAUNCH_SUBDIR=$NF_LAUNCH_DIR_OLD # specify relevant launch directory
 
-            fi # input checks; RESUME
+    fi # checks; RESUME
 
-        fi # mode type; START|RESUME
-
-    fi # argument type; INITIAL|FINAL
-
-done
-
+fi # mode; NEW|RESUME
 
 
 ####################
 # LAUNCH PIPELINE
 ####################
 
-# create & move to launch directory
-printf "\n>>> Changing To: $NF_LAUNCH_SUBDIR\n"
+# create & move to launch directory as required
+echo -e "\n>>> Changing To: $NF_LAUNCH_SUBDIR"
 mkdir -p $NF_LAUNCH_SUBDIR; cd $NF_LAUNCH_SUBDIR
-printf "\n>>> Launching From: $(pwd)\n"
+echo -e "\n>>> Launching From: $(pwd)"
 
-# execute nextflow command 
-printf "\nEXECUTING: $COMMAND\n\n"
-eval $COMMAND
+# specify launch command
+IFS='' read -r -d '' CMD << EOF
+    nextflow \\
+    -C $CONFIG \\
+    run $WORKFLOW \\
+    -profile $PROFILE \\
+    -params-file $PARAMETERS
+EOF
+
+# execute nextflow 
+echo -e "\nEXECUTING:\n\n$CMD\n"
+eval "$CMD"
 
 
-
-####################
 # PLOT DAG
-####################
 
-DOT=$(which dot) # check graphviz installed latest dag with error suppressed
+DOT=$(which dot) # check graphviz installed
 
-DAG=$(ls -t logs/reports*/*.dot 2> /dev/null | head -n 1) # list latest dag with error suppressed
+DAG=$(ls -t logs/reports*/*.dot 2> /dev/null | head -n 1) # fin latest dag; error suppressed
 
-if [ -z $DOT ]; then # dot not installed
+if [ -z $DOT ] || [ -z $DAG ]; then # DAG dependencies missing
 
-    echo "*** Graphviz not installed ***"; exit 0 # raise error & exit
+    echo -e "\n*** Unable to plot DAG ***\n"; exit 0
 
-elif [ -z $DAG ]; then # DAG not generated
+else # Graphiv installed & DAG found
 
-    echo "*** No DAG Found ***"; exit 0 # raise error & exit
+    echo -e "\nGenerating DAG\n"
 
-else # DAG generated
-
-    # execute graphviz command
+    # execute graphviz
     COMMAND="dot -Tpdf $DAG -O"
-    printf "\nEXECUTING: $COMMAND\n\n"
     eval $COMMAND
 
     # publish latest dag
-    COMMAND="cp ${DAG}.pdf $STARTDIR/dag_latest.pdf"
+    COMMAND="cp ${DAG}.pdf $WORKDIR/dag_latest.pdf"
     eval $COMMAND
 
-fi # argument checks; DAG
+fi # checks; DAG

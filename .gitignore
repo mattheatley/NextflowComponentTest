@@ -1,4 +1,5 @@
 .nextflow*
 **/.DS_Store
-**/launch_*
+launch_*/**
+groovy/**
 latest_dag.pdf
