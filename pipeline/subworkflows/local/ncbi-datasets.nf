@@ -6,7 +6,7 @@
 
 /* MODULES IMPORT */
 
-    moduleDir = "../modules"
+    moduleDir = "../../modules"
 
     include { NCBI_Datasets_Summary as Summary } from "${moduleDir}/local/NCBI_Datasets_Summary"
 
@@ -21,9 +21,7 @@
 /* WORKFLOW DEFINITION */
 
     workflow SUBWORKFLOW { 
-        
-        println("\n${INDENT}RUNNING WORKFLOW...\n")
-        
+                
         println "\tDOWNLOADING NCBI GENOME INFO\n"
     
     
