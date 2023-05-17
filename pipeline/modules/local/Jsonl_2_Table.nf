@@ -16,7 +16,7 @@
             tuple val(taxon), path(jsonl), val(count)
 
         output:
-            tuple val(taxon), path(jsonl), path("*.tsv"), emit: Sublist
+            tuple val(taxon), path(jsonl), path("*.tsv"), emit: Info
 
         script:
             """
@@ -24,4 +24,3 @@
             """
     
         }
-

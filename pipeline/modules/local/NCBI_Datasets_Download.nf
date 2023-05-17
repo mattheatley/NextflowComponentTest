@@ -16,7 +16,7 @@
             tuple val(taxon), val(accession)
 
         output:
-            tuple val(fasta_dir), path("ncbi_dataset/data/*/*.fna"), emit: Sublist
+            tuple val(fasta_dir), path("ncbi_dataset/data/*/*.fna"), emit: Info
 
         script:
 

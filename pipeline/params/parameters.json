@@ -1,0 +1,6 @@
+
+{
+    "component"   : "parameters",
+    "layer1": "layer1-parameter",
+    "collection1": {"layer2": "layer2-parameter" }
+}

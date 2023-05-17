@@ -6,23 +6,27 @@
 
 /* MODULES IMPORT */
 
-    moduleDir = "../../modules"
+    moduleDir = "../modules"
 
     include { NCBI_Datasets_Summary as Summary } from "${moduleDir}/local/NCBI_Datasets_Summary"
 
     include { Jsonl_2_Table as Tabulate  } from "${moduleDir}/local/Jsonl_2_Table"
 
-    include { NCBI_Datasets_Download as Download } from "${moduleDir}/local/NCBI_Datasets_Download"
+    include { NCBI_Datasets_Download as DownloadGenomes } from "${moduleDir}/local/NCBI_Datasets_Download"
+
+    include { NCBI_TaxonIDs_Download as DownloadTaxonIDs } from "${moduleDir}/local/NCBI_TaxonIDs_Download"
 
 
 
 /* WORKFLOW DEFINITION */
 
     workflow SUBWORKFLOW { 
-                
+        
+        println("\n${INDENT}RUNNING WORKFLOW...\n")
+        
         println "\tDOWNLOADING NCBI GENOME INFO\n"
-
-
+    
+    
         /* process taxon parameter */
 
             // check taxons input format
@@ -52,13 +56,13 @@
                 TaxonsList = params.ncbi_taxons.split(',')
                 }
 
-            // convert to lowercase
+            // make lowercase
             TaxonsList = TaxonsList.collect{ taxon -> taxon.toLowerCase() }
 
             // remove duplicates
             TaxonsList = TaxonsList.unique()
 
-            // remove empty lines
+            // remove empty
             TaxonsList.removeAll([""])
 
             // create channel
@@ -73,7 +77,7 @@
 
         /* group taxons by availability */
 
-            Summary.out.Sublist.branch{ taxon, json, count ->
+            Summary.out.Info.branch{ taxon, json, count ->
 
                 Available:   
                     !count.toInteger().equals(0)
@@ -93,9 +97,10 @@
 
             // log available taxons        
             SummaryGroups.Available.collectFile(
-                   name : "${params.publishDir}/taxons-available.txt",  
+                name : "${params.publishDir}/taxons-available.txt",  
                 newLine : true 
                 ){ taxon, json, count -> "${taxon}:${count}" }
+
 
         /* process available taxons */
 
@@ -104,7 +109,7 @@
 
 
             // extract accessions from table
-            Tabulate.out.Sublist.flatMap{ taxon, jsonl, table -> 
+            Tabulate.out.Info.flatMap{ taxon, jsonl, table -> 
 
                 accessions = table.splitCsv( 
                     header : true,
@@ -122,15 +127,28 @@
 
             if( params.ncbi_download ) {
             
-                // start downloads
-                Download( Accessions ) 
+                // specify ncbi server
+                def NCBI_FTP_Site = "https://ftp.ncbi.nlm.nih.gov"
+
+                // specify taxonomy urls
+                Channel.of(
+                    "${NCBI_FTP_Site}/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz",
+                    "${NCBI_FTP_Site}/pub/taxonomy/accession2taxid/nucl_wgs.accession2taxid.gz",
+                    "${NCBI_FTP_Site}/pub/taxonomy/taxdump.tar.gz"
+                    ).set{ Urls }
+
+                // download taxonomy data
+                DownloadTaxonIDs( Urls )
+
+                // download genomes
+                DownloadGenomes( Accessions ) 
                 
                 // log downloaded genomes
-                Download.out.Sublist.collectFile(
-                       name : "${params.publishDir}/accessions-available.txt",  
+                DownloadGenomes.out.Info.collectFile(
+                    name : "${params.publishDir}/accessions-available.txt",  
                     newLine : true 
                     ){ fasta_dir, download -> "${fasta_dir}/${download.getName()}" }
 
                 }
-
+        
         }

@@ -9,7 +9,7 @@
             val(taxon)
 
         output:
-            tuple val(taxon), path("*.jsonl"), env(count), emit: Sublist
+            tuple val(taxon), path("*.jsonl"), env(count), emit: Info
 
         script:
 
