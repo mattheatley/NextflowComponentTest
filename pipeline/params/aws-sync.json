@@ -1,12 +1,11 @@
 
 {
-                "component" : "aws-sync",
-
-                "aws_profile" : "ont-gws-apps-benchmarking-prod",
-                "source_path" : "/Users/matt.heatley/Desktop/NextflowComponentTest/additional/dir2sync/",
-                "bucket_path" : "ont-gws-apps-benchmarking-prod",
-                "object_path" : "/dat/TestSync/",
-                 "chunk_size" : 4,
-                 "target_ext" : "fast5|fastq",
-                    "dry_run" : true
+  "component" : "aws-sync",
+"source_path" : "/home/OXFORDNANOLABS/mheatley/NextflowComponentTest/additional/dir2sync/",
+"aws_profile" : "ont-gws-apps-benchmarking-prod",
+"bucket_path" : "ont-gws-apps-benchmarking-prod",
+"object_path" : "/dat/TestSync/",
+ "chunk_size" : 4,
+ "target_ext" : "fast5|fastq",
+    "dry_run" : true
 }

@@ -25,8 +25,8 @@
 
         input:
             path(files)
-            val(bucket)
-            val(object)
+            val(s3bucket)
+            val(s3object)
 
         output:
             path(files)
@@ -51,13 +51,14 @@
                 # strip localROOT/ from localPATH prefix
                 localTREE=\$(echo \${localPATH} | sed 's+${localROOT}/++')
 
-                # extract directory/subdirectory components
+                # extract directory[/subdirectory] components
                 localSTEM=\$(dirname \$localTREE)
+
                 # extract basename components
                 localLEAF=\$(basename \$localTREE)
 
                 # specify remote destination
-                remoteDEST="${bucket}/${object}/\${localTREE}"
+                remoteDEST="${s3bucket}/${s3object}/\${localTREE}"
 
                 # display transfer info
                 echo "localPATH:  \$localPATH"
