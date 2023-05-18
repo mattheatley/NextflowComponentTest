@@ -3,9 +3,9 @@
                 "component" : "aws-sync",
 
                 "aws_profile" : "ont-gws-apps-benchmarking-prod",
-                "source_path" : "/Users/matt.heatley/Desktop/NextflowComponentTest/additional/sync_test/",
-                "bucket_path" : "////ont-gws-apps-benchmarking-prod/",
-                "object_path" : "/dat/path/to/object////",
+                "source_path" : "/Users/matt.heatley/Desktop/NextflowComponentTest/additional/dir2sync/",
+                "bucket_path" : "ont-gws-apps-benchmarking-prod",
+                "object_path" : "/dat/TestSync/",
                  "chunk_size" : 4,
                  "target_ext" : "fast5|fastq",
                     "dry_run" : true
