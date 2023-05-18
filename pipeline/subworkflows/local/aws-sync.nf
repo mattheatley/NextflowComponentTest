@@ -24,9 +24,17 @@
         /* search source directory */
 
             // extract source path components
-            SourcePath   = file(params.source_path)
-            SourceTarget = SourcePath.getName()
-            SourceParent = SourcePath.getParent()
+            localROOT = file(params.source_path).getParent()
+
+            // prepare s3 parameters
+            def S3_COMPONENTS = [ 
+                params.bucket_path,
+                params.object_path
+                ]
+
+            // strip leading/trailing slashes
+            def (BUCKET, OBJECT) = S3_COMPONENTS.collect{ path ->                
+                path.replaceAll( '^/+', '' ).replaceAll( '/+$', '' ) }
 
             // get all directory contents
             FilesList = files("${params.source_path}/**")
@@ -77,11 +85,11 @@
             // create collective transfer commands per chunk  
             BatchPaths.map{ chunk ->
 
-                chunk.collect{ source -> 
+                chunk.collect{ localPATH -> 
 
-                    destination = "s3://${params.bucket_path}${source.toString().minus(SourceParent)}"
+                    remoteDEST = "s3://${BUCKET}/${OBJECT}/${localPATH.toString().minus(localROOT)}"
 
-                    "\n${modulator}aws s3 --profile ${params.aws_profile} sync ${source} ${destination}" 
+                    "\n${modulator}aws s3 --profile ${params.aws_profile} sync ${localPATH} ${remoteDEST}" 
                     
                     }.join() 
 
@@ -90,7 +98,11 @@
 
         /* execute transfer */
 
-            Sync_Paths( BatchPaths )
+            Sync_Paths( 
+                BatchPaths,
+                Channel.value(BUCKET),
+                Channel.value(OBJECT)
+                )
 
             //Sync_Commands( BatchCommands )
 

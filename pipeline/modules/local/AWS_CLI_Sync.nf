@@ -25,34 +25,50 @@
 
         input:
             path(files)
+            val(bucket)
+            val(object)
 
         output:
             path(files)
 
         script:
             modulator = params.dry_run ? "#" : ""
-            parent = file(params.source_path).getParent()
+            localROOT = file(params.source_path).getParent()
             """
             # convert input to array
-            FILES=( ${files.join(" ")} )
+            LINKS=( ${files.join(" ")} )
 
-            echo "parent: ${parent}"
+            echo "localROOT: ${localROOT}"
 
             # cycle through array
-            for FILE in \${FILES[@]}; do
+            for LINK in \${LINKS[@]}; do
 
                 echo
 
                 # extract canonical symlink path
-                LINK=\$(readlink -f \${FILE})
+                localPATH=\$(readlink -f \${LINK})
 
-                # strip parent/ from path prefix
-                DEST=\$(echo \${LINK} | sed 's+${parent}/++')
-                STEM=\$(dirname \$DEST)
-                echo "link: \$LINK"
-                echo "stem: \$STEM"
-                echo "dest: \$DEST"
-                echo "${modulator}aws s3 --profile ${params.aws_profile} sync \${FILE} s3://<${params.bucket_path}>/<${params.object_path}>/\${DEST}"
+                # strip localROOT/ from localPATH prefix
+                localTREE=\$(echo \${localPATH} | sed 's+${localROOT}/++')
+
+                # extract directory/subdirectory components
+                localSTEM=\$(dirname \$localTREE)
+                # extract basename components
+                localLEAF=\$(basename \$localTREE)
+
+                # specify remote destination
+                remoteDEST="${bucket}/${object}/\${localTREE}"
+
+                # display transfer info
+                echo "localPATH:  \$localPATH"
+                echo "localTREE:  \$localTREE"
+                echo "localSTEM:  \$localSTEM"
+                echo "localLEAF:  \$localLEAF"
+                echo "remoteDEST: \$remoteDEST"
+                
+                # specify transfer command
+                CMD="${modulator}aws s3 --profile ${params.aws_profile} sync --follow-symlinks \${LINK} s3://\${remoteDEST}"
+                echo \$CMD
 
             done
             """
