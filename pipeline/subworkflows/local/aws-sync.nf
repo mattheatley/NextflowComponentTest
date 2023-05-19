@@ -27,9 +27,6 @@
             // check source exists
             assert file(params.source_path).exists(): "Error ~ Source not found; ${params.source_path}"
 
-            // extract source path components
-            localROOT = file(params.source_path).getParent()
-
             // prepare s3 parameters
             def s3Components = [ 
                 params.bucket_path,
@@ -39,8 +36,6 @@
             // strip leading/trailing slashes
             def (s3Bucket, s3Object) = s3Components.collect{ path ->                
                 path.replaceAll( '^/+', '' ).replaceAll( '/+$', '' ) }
-
-
 
 
         /* search source directory */
@@ -73,8 +68,10 @@
 
 
 
-
         /* search source directory (alt) */
+
+            // extract source path components
+            //localROOT = file(params.source_path).getParent()
 
             // split file extensions & strip leading dots
             //FileExt = params.chunk_ext.split(',').collect{ ext -> 
