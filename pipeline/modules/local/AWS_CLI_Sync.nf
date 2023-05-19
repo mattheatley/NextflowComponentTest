@@ -1,9 +1,78 @@
+/* LOCAL DU CHECK */
 
-/* DOWNLOAD TAXON NCBI DATASETS GENOME SUMMARY */
+    process Summarize_Disk_Usage {
+
+        //container = ''
+
+        publishDir path : "${params.publishDir}/du",
+                pattern : "summary.txt",
+                   mode : "copy",
+              overwrite : true
+
+        input:
+            path(source)
+
+        output:
+            path("summary.txt"), emit: summary
+            path("chunk*.txt"),  emit: chunks
+
+        script:
+            """
+            TRANSFERS=\$(du -Lac ${source} | sort -k1 -n)
+
+            chunk_size=0 ; chunk_num=0
+            total_size=0 ; file_num=0
+
+            size_limit=${params.chunk_size}
+
+            while IFS=\$'\t' read -r SIZE PATH; do
+                
+                # append du info to summary file
+                echo -e "\$SIZE\t\$PATH">> ./summary.txt
+
+                if [ -f \$PATH ]; then
+
+                    let file_num+=1
+                    
+                    # calculate updated chunk size
+                    chunk_sum=\$((chunk_size + SIZE))
+                    
+                    # first file or chunk exceeds size limit
+                    if [ \$file_num -eq 1 ] || [ \$chunk_sum -gt \$size_limit ]; then
+                        # record new chunk
+                        let chunk_num+=1
+                        # reset chunk size
+                        chunk_size=0
+                    fi
+
+                    # specify chunk file
+                    chunk_file="chunk\${chunk_num}.txt"
+
+                    # create empty chunk file as required
+                    if [ ! -f \$chunk_file ]; then
+                        > \$chunk_file
+                    fi
+
+                    let chunk_size+=\$SIZE
+                    let total_size+=\$SIZE
+
+                    # append file to current chunk file
+                    echo \$PATH >> \$chunk_file
+                
+                fi
+
+            done <<< "\$TRANSFERS"
+
+            """
+
+        }
+
+
+/* AWS S3 SYNC UPLOAD */
 
     process AWS_CLI_Sync_Commands {
 
-        //container = 'staphb/ncbi-datasets:14.20.0'
+        //container = ''
 
         input:
             val(commands)
@@ -21,7 +90,7 @@
 
     process AWS_CLI_Sync_Paths {
 
-        //container = 'staphb/ncbi-datasets:14.20.0'
+        //container = ''
 
         input:
             path(files)

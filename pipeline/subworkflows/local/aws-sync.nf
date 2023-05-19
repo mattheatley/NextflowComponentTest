@@ -9,6 +9,7 @@
     moduleDir = "../../modules"
 
     include { 
+        Summarize_Disk_Usage as CalcDU;
         AWS_CLI_Sync_Paths    as Sync;
         //AWS_CLI_Sync_Commands as SyncCommands
         } from "${moduleDir}/local/AWS_CLI_Sync"
@@ -21,7 +22,10 @@
         println "\tSYNCING VIA AWS\n"
 
 
-        /* search source directory */
+        /* setup */
+
+            // check source exists
+            assert file(params.source_path).exists(): "Error ~ Source not found; ${params.source_path}"
 
             // extract source path components
             localROOT = file(params.source_path).getParent()
@@ -36,6 +40,28 @@
             def (s3Bucket, s3Object) = s3Components.collect{ path ->                
                 path.replaceAll( '^/+', '' ).replaceAll( '/+$', '' ) }
 
+            // split file extensions & strip leading dots
+            FileExt = params.chunk_ext.split(',').collect{ ext -> 
+                ext.replaceAll( '^\\.+', '' ) }
+
+            // create file extension regex
+            FileRegex = FileExt.collect{ ext -> 
+                ext.replace( '.', '\\.' ) }.join('|')
+
+            extension_regex = ~".*\\.(${FileRegex})\$"
+
+
+
+
+        /* search source directory */
+
+            // calculate transfer size
+            CalcDU(params.source_path)
+
+            CalcDU.out.summary.view{ "summary: ${it}"}
+            CalcDU.out.chunks.view{ "chunk: ${it}"}
+
+
             // get all directory contents
             FilesList = files("${params.source_path}/**")
         
@@ -49,7 +75,7 @@
 
                 Chunks:
                     // extension matches that of target
-                    source.getName().matches(".*\\.(${params.target_ext})\$")
+                    source.getName().matches(extension_regex)
                     return source
                 
                 Remaining: 
@@ -63,7 +89,7 @@
 
             // group target files into multiple chunks
             Sorted.Chunks.collate( 
-                params.chunk_size, 
+                params.chunk_files, 
                 ).set{ Chunks }
 
             // group remaining files into single chunk
@@ -83,12 +109,15 @@
 
         /* execute transfer */
 
+
+            /*
+
             Sync( 
                 sgeJobs,
                 Channel.value(s3Bucket),
                 Channel.value(s3Object)
                 )
-
+            */
 
         /* specify transfer commands */
 
