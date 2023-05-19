@@ -4,8 +4,14 @@
 
         //container = ''
 
-        publishDir path : "${params.publishDir}/du",
-                pattern : "summary.txt",
+        publishDir path : "${params.publishDir}",
+                pattern : "*.txt",
+                 saveAs : { file -> 
+                    if( file.equals("summary.txt") ){
+                        "${file}" }
+                    else{ 
+                        "chunks/${file}" }
+                    },
                    mode : "copy",
               overwrite : true
 
@@ -18,7 +24,8 @@
 
         script:
             """
-            TRANSFERS=\$(du -Lac ${source} | sort -k1 -n)
+            SOURCE=\$(readlink ${source})
+            TRANSFERS=\$(du -Labc \$SOURCE | sort -k1 -n)
 
             chunk_size=0 ; chunk_num=0
             total_size=0 ; file_num=0
@@ -27,8 +34,7 @@
 
             while IFS=\$'\t' read -r SIZE PATH; do
                 
-                # append du info to summary file
-                echo -e "\$SIZE\t\$PATH">> ./summary.txt
+                CHUNK="NA"
 
                 if [ -f \$PATH ]; then
 
@@ -58,8 +64,14 @@
 
                     # append file to current chunk file
                     echo \$PATH >> \$chunk_file
-                
+
+                    CHUNK=\$chunk_num
+
                 fi
+
+                # append du info to summary file
+                echo -e "\$SIZE\t\$CHUNK\t\$PATH">> ./summary.txt
+
 
             done <<< "\$TRANSFERS"
 

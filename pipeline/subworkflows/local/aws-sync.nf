@@ -40,16 +40,6 @@
             def (s3Bucket, s3Object) = s3Components.collect{ path ->                
                 path.replaceAll( '^/+', '' ).replaceAll( '/+$', '' ) }
 
-            // split file extensions & strip leading dots
-            FileExt = params.chunk_ext.split(',').collect{ ext -> 
-                ext.replaceAll( '^\\.+', '' ) }
-
-            // create file extension regex
-            FileRegex = FileExt.collect{ ext -> 
-                ext.replace( '.', '\\.' ) }.join('|')
-
-            extension_regex = ~".*\\.(${FileRegex})\$"
-
 
 
 
@@ -58,50 +48,16 @@
             // calculate transfer size
             CalcDU(params.source_path)
 
-            CalcDU.out.summary.view{ "summary: ${it}"}
-            CalcDU.out.chunks.view{ "chunk: ${it}"}
+            CalcDU.out.chunks.flatten().set{ ChunksSize }
 
+            // read lines in chunk file
+            ChunksSize.map{ chunk ->
 
-            // get all directory contents
-            FilesList = files("${params.source_path}/**")
-        
-            // convert directory contents to channel
-            Channel.fromList( FilesList ).set{ LocalFiles }
+                chunk.splitText( by: 1 ).collect{ line ->  file(line.trim()) }
 
+                }.set{ sgeJobs }
 
-        /* group files by extension */
-
-            LocalFiles.branch{ source ->
-
-                Chunks:
-                    // extension matches that of target
-                    source.getName().matches(extension_regex)
-                    return source
-                
-                Remaining: 
-                    true
-                    return source
-            
-                }.set{ Sorted }
-
-
-        /* group files into chunks */
-
-            // group target files into multiple chunks
-            Sorted.Chunks.collate( 
-                params.chunk_files, 
-                ).set{ Chunks }
-
-            // group remaining files into single chunk
-            Sorted.Remaining.collect(
-                flat : false
-                ).set{ Remaining }
-
-            // merge channels
-            Remaining.concat( 
-                Chunks 
-                ).set{ sgeJobs }
-
+            // show total transfer chunks
             sgeJobs.count().view{ total ->
                 "total cluster jobs: ${total}"
                 }
@@ -109,11 +65,80 @@
 
         /* execute transfer */
 
+            Sync( 
+                sgeJobs,
+                Channel.value(s3Bucket),
+                Channel.value(s3Object)
+                )
+
+
+
+
+        /* search source directory (alt) */
+
+            // split file extensions & strip leading dots
+            //FileExt = params.chunk_ext.split(',').collect{ ext -> 
+            //    ext.replaceAll( '^\\.+', '' ) }
+
+            // create file extension regex
+            //FileRegex = FileExt.collect{ ext -> 
+            //    ext.replace( '.', '\\.' ) }.join('|')
+
+            //extension_regex = ~".*\\.(${FileRegex})\$"
+
+            // get all directory contents
+            //FilesList = files("${params.source_path}/**")
+        
+            // convert directory contents to channel
+            //Channel.fromList( FilesList ).set{ LocalFiles }
+
+
+        /* group files by extension */
+
+            //LocalFiles.branch{ source ->
+
+            //    ChunksFiles:
+                    // extension matches that of target
+            //        source.getName().matches(extension_regex)
+            //        return source
+                
+            //    RemainingFiles: 
+            //        true
+            //        return source
+            
+            //    }.set{ Sorted }
+
+
+        /* group files into chunks */
+
+            // group target files into multiple chunks
+            //Sorted.ChunksFiles.collate( 
+            //    params.chunk_files, 
+            //    ).set{ ChunksFiles }
+
+            // group remaining files into single chunk
+            //Sorted.RemainingFiles.collect(
+            //    flat : false
+            //    ).set{ RemainingFiles }
+
+            // merge channels
+            //RemainingFiles.concat( 
+            //    ChunksFiles 
+            //    ).set{ sgeJobsAlt }
+
+            // show total transfer chunks
+            //sgeJobsAlt.count().view{ total ->
+            //    "total cluster jobs: ${total}"
+            //    }
+    
+
+        /* execute transfer */
+
 
             /*
 
             Sync( 
-                sgeJobs,
+                sgeJobsAlt,
                 Channel.value(s3Bucket),
                 Channel.value(s3Object)
                 )
