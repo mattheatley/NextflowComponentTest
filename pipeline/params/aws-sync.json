@@ -7,6 +7,7 @@
 "bucket_path" : "ont-gws-apps-benchmarking-prod",
 "object_path" : "/dat/TestSync/",
 "chunk_files" : 4,
+"chunk_size_argus":50000000000,
  "chunk_size" : 50,
   "chunk_ext" : "fast5,fastq",
     "dry_run" : true

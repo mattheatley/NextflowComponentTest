@@ -1,0 +1,8 @@
+
+{
+"component" : "meta-db",
+"database_name" : "dbTest",
+ "genomes_path" : "/Users/matt.heatley/Desktop/test/TestReference",
+  "taxons_path" : "/Users/matt.heatley/Desktop/test/TestTaxons",
+      "dry_run" : true
+}
