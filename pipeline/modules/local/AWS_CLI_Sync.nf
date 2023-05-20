@@ -24,7 +24,10 @@
 
         script:
             """
-            SOURCE=\$(readlink ${source})
+            # extract canonical symlink path
+            SOURCE=\$(readlink -f ${source})
+
+            # calculate disk usage & sort by file size
             TRANSFERS=\$(du -Labc \$SOURCE | sort -k1 -n)
 
             chunk_size=0 ; chunk_num=0
@@ -34,6 +37,7 @@
 
             while IFS=\$'\t' read -r SIZE PATH; do
                 
+                # chunk for summary
                 CHUNK="NA"
 
                 if [ -f \$PATH ]; then
@@ -43,29 +47,22 @@
                     # calculate updated chunk size
                     chunk_sum=\$((chunk_size + SIZE))
                     
-                    # first file or chunk exceeds size limit
+                    # start new chunk; (i) initial file or (ii) current chunk would exceed size limit
                     if [ \$file_num -eq 1 ] || [ \$chunk_sum -gt \$size_limit ]; then
-                        # record new chunk
                         let chunk_num+=1
-                        # reset chunk size
                         chunk_size=0
                     fi
-
-                    # specify chunk file
-                    chunk_file="chunk\${chunk_num}.txt"
-
-                    # create empty chunk file as required
-                    if [ ! -f \$chunk_file ]; then
-                        > \$chunk_file
-                    fi
+                    
+                    CHUNK=\$chunk_num
 
                     let chunk_size+=\$SIZE
                     let total_size+=\$SIZE
 
-                    # append file to current chunk file
-                    echo \$PATH >> \$chunk_file
+                    # specify current chunk file
+                    chunk_file="chunk\${chunk_num}.txt"
 
-                    CHUNK=\$chunk_num
+                    # append file path to current chunk file
+                    echo \$PATH >> \$chunk_file
 
                 fi
 
