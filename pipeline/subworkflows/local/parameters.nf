@@ -1,23 +1,28 @@
-def flatParams(params, sep) {    
-    
-    params.collect{ key, value -> 
 
+/* flatten parameters */
+
+def flatParams(params, sep, list) {    
+    
+    params.each{ key, value -> 
+
+        // recursively flatten nested maps
         if (value instanceof Map) {
 
-            // flatten nested map            
             nestedMap = value.collectEntries{ subkey, subvalue -> 
                 [ ("${key}${sep}${subkey}"): subvalue ] }
-            
-            // recursively call function
-            flatParams( nestedMap, sep )
 
+            flatParams( nestedMap, sep, list )
+           
             }
 
+        // store key:value pair
         else
 
-            [ (key): value ]
+            list.add([ (key): value ])
 
-        }.flatten().collectEntries()
+        }
+
+        return list.collectEntries()
     }
 
 
@@ -26,14 +31,14 @@ def flatParams(params, sep) {
 
     workflow SUBWORKFLOW {
 
-        println params
+        println "${params}\n"
 
         println "first level parameter:  ${params.main1}"
 
-        println "nested level parameter: ${params.sub1.A}"
+        println "nested level parameter: ${params.sub1.A}\n"
 
         println "flattened nested parameters"
-        flatParams(params, '.').each{ key,value ->
+        println flatParams(params, '.', []).each{ key,value ->
             println "${key}\t${value}"
         }
 
