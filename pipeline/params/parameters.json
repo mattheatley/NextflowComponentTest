@@ -1,6 +1,13 @@
 
 {
     "component"   : "parameters",
-    "layer1": "layer1-parameter",
-    "collection1": {"layer2": "layer2-parameter" }
+    "main1": "M1",
+    "sub1": {
+        "A": "S1A",
+        "B": "S1B",
+        "C": {
+            "X":"S1CX",
+            "Y":"S1CY"
+            } 
+        }
 }

@@ -6,11 +6,11 @@
     input:
         val value
         each letter
-        each symbol
+        each symbols
 
     exec:
-
-    println "Current Value: ${value} (Combination ${letter} ${symbol})"
+        (symbol1, symbol2) = symbols
+        println "Current Value: ${value} (Combination ${letter} ${symbol1}/${symbol2})"
 
     }
 
@@ -69,7 +69,7 @@
 
         // each of; channel or list
         letters = Channel.from('A', 'B', 'C')
-        symbols = ['!', '?' ]
+        symbols = [ ['!','£'], ['?','$' ] ]
 
         MODULE(
             values, 
