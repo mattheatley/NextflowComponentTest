@@ -52,9 +52,7 @@
                     ]
                 ]
 
-            padNum = toDisplay.collect{ category, keySet -> 
-                
-                keySet.collect{ key -> key.size() }.max() }.max()
+            padNum = toDisplay.values().flatten{ key -> key.size() }.max()
 
             toDisplay.each{ category, keySet -> 
                 
