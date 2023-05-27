@@ -130,9 +130,18 @@
 
                 // specify taxonomy urls
                 Channel.of(
+                    // kraken2 specific
                     "${NCBI_FTP_Site}/pub/taxonomy/accession2taxid/nucl_gb.accession2taxid.gz",
                     "${NCBI_FTP_Site}/pub/taxonomy/accession2taxid/nucl_wgs.accession2taxid.gz",
                     "${NCBI_FTP_Site}/pub/taxonomy/taxdump.tar.gz"
+
+                    // krona specific
+                    "${NCBI_FTP_Site}/pub/taxonomy/accession2taxid/dead_nucl.accession2taxid"
+                    "${NCBI_FTP_Site}/pub/taxonomy/accession2taxid/dead_wgs.accession2taxid"
+                    //"${NCBI_FTP_Site}/pub/taxonomy/accession2taxid/dead_prot.accession2taxid"
+                    //"${NCBI_FTP_Site}/pub/taxonomy/accession2taxid/prot.accession2taxid"
+
+
                     ).set{ Urls }
 
                 // download taxonomy data

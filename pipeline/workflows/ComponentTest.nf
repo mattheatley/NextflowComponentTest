@@ -3,13 +3,13 @@
 
     INDENT = '   '
 
-    start_message = """
+    StartMessage = """
     ${INDENT}------------------------ 
     ${INDENT}        NEXTFLOW    
     ${INDENT}    COMPONENT TESTER      
     ${INDENT}------------------------ 
     """
-    println(start_message)
+    println(StartMessage)
     
     assert params.component: "No component provided"
 

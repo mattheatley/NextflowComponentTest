@@ -1,0 +1,11 @@
+
+{
+     "component"  : "chunks",
+     "Chunks": { 
+        "TargetPath" : "/Users/matt.heatley/Desktop/test/TestReference",
+        "FileExt"    : "fna,txt",
+        "ByteLimit"  : 10000000,
+        "FileLimit"  : null,
+        "verbose"    : true
+        }
+}

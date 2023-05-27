@@ -1,6 +1,6 @@
 /* BUILD KRAKEN2 DATABASE */
 
-    process Kraken2_Sequential_Build {
+    process Kraken2_Sequential_AddToLibrary {
 
         //container = ''
 
@@ -8,30 +8,40 @@
             val(dbName)
             path(taxonsPath), stageAs: "taxonomy"
             path(genomeList)
-        // N.B. not possible to stageAs within dbName; hence mv staged directory below
+        // N.B. not possible to stageAs within dbName when input; hence mv staged directory below
         
         output:
             //path("*.txt"),  emit: prep
             path(genomeList)
+            env(ADDED)
 
         script:
             
             customLibrary = "${dbName}/library/added"
 
             """
-            # create database directory
-            mkdir -p ${dbName}
+            # create database directory & move staged taxonomy directory
+            mkdir -p ${customLibrary}
+            mv taxonomy ${dbName}/
 
-            # move staged taxonomy directory
-            mv taxonomy ${dbName}
-            
-            du -La ${dbName}
-            count=0
+            mkdir -p ${customLibrary}
 
-            while IFS="" read -r PATH; do
+            ADDED=0
+            while IFS="" read -r FASTA; do
                 
-                let count+=1
-                echo ${customLibrary}/\$count
+                let ADDED+=1
+                echo "Adding genome \$ADDED: \$(basename \$FASTA)"
+                
+                # creates dbName/library/added/prelim_map_XXXXXXXXXX.txt temp file
+                #kraken2-build --add-to-library \$FASTA --db ${dbName}
+                # mimic prelim map creation
+                echo "\$ADDED \$FASTA" > ${customLibrary}/prelim_map_XXXXXXXXXX.txt
+
+                # extract input basename & remove final extension
+                LABEL=\$(basename \$FASTA .\${FASTA##*.})
+
+                # move & rename temp prelim map file
+                mv ${customLibrary}/prelim_map_??????????.txt prelim_map_\${LABEL}.txt
 
             done < "${genomeList}"
             """

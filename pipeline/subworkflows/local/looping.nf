@@ -8,9 +8,13 @@
         each letter
         each symbols
 
-    exec:
+    script:
         (symbol1, symbol2) = symbols
-        println "Current Value: ${value} (Combination ${letter} ${symbol1}/${symbol2})"
+        combination = "${letter} ${symbol1}/${symbol2})"
+        println "Current Value: ${value} (Combination ${combination})"
+        """
+        echo \"${combination}\" > ${letter}-${symbol1}-${symbol2}.txt
+        """
 
     }
 
@@ -69,7 +73,7 @@
 
         // each of; channel or list
         letters = Channel.from('A', 'B', 'C')
-        symbols = [ ['!','£'], ['?','$' ] ]
+        symbols = [ ['x','y'], ['q','w' ] ]
 
         MODULE(
             values, 

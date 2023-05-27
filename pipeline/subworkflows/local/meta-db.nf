@@ -9,7 +9,7 @@
     moduleDir = "../../modules"
 
     include { 
-        Kraken2_Sequential_Build as Kraken2SequentialBuild;
+        Kraken2_Sequential_AddToLibrary as Kraken2SequentialAddToLibrary;
         } from "${moduleDir}/local/Metagenomics_Build_DB"
 
 
@@ -40,19 +40,23 @@
 
         /* sequential builds */
 
+            // provide file containing genomes paths
             RefFile.multiMap{ file ->
-                Kraken2: Other: file
-                }.set{ SequentialInputs }
+                Kraken2: Additional: file
+                }.set{ BuildSequential }
 
-            Kraken2SequentialBuild( 
+            Kraken2SequentialAddToLibrary( 
                 Channel.value(params.database_name),
                 Channel.fromPath( params.taxons_path ),
-                SequentialInputs.Kraken2,
+                BuildSequential.Kraken2,
                 )
 
 
+        /* parallel builds */
+
+            // provide genome paths
             RefPaths.multiMap{ paths ->
-                Other: paths
-                }.set{ ParallelBuild }
+                Additional: paths
+                }.set{ BuildParallel }
 
         }
