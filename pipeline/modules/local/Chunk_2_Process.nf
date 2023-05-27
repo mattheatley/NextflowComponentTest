@@ -2,7 +2,15 @@
 
     process Process_Chunk {
         
-        debug true
+        debug params.Verbose ?: false
+
+        publishDir path : "${params.publishDir}/process",
+                pattern : "*.{txt,md5}",
+                 saveAs : { path -> 
+                    subDir = path.endsWith(".md5") ? "md5" : "info"
+                    "${subDir}/${file(path).getName()}" },
+                   mode : "copy",
+              overwrite : true
 
         input:
         
@@ -14,8 +22,9 @@
         output:
 
             tuple   val  (Chunk), 
-                    path (Files)
-            path    "*md5", optional: true
+                    path (Files),            emit: Chunks
+            path    "*.txt",                 emit: Info
+            path    "*.md5", optional: true, emit: MD5s
 
 
         script:
@@ -33,7 +42,7 @@
             CHUNK="chunk${Chunk}.txt"
 
             > \$CHUNK.md5
-            if [ "${MD5 ?: ""}" ]; then
+            if [ "${MD5 ?: ''}" ]; then
                 > \$CHUNK.md5
             fi 
 
@@ -42,14 +51,13 @@
                 LINK="\${STAGED[\$IDX]}"
                 READLINK="\$(readlink -f \$LINK)"
 
-                echo -e "Chunk ${Chunk} File \$((\$IDX+1)) of \${#STAGED[@]}"
+                echo "Chunk ${Chunk} File \$((\$IDX+1)) of \${#STAGED[@]}"
                 echo "StagedAs: \$LINK"
                 echo "ReadLink: \$(readlink -f \$LINK)"
                 
                 echo -e "\$LINK\t\$READLINK" >> \$CHUNK                
-                if [ "${MD5 ?: ""}" ]; then
-                    MD5=\$(md5sum \$READLINK)
-                    echo "\$MD5" >> \$CHUNK.md5
+                if [ "${MD5 ?: ''}" ]; then
+                    echo "\$(md5sum \$READLINK)" >> \$CHUNK.md5
                 fi 
 
             done

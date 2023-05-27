@@ -92,7 +92,7 @@ import java.nio.file.Files
             // stage chunks
             ChunkList = ChunkMap.collect{ key, values ->
 
-                if ( Input.verbose ){
+                if ( params.Verbose ){
 
                     println "chunk ${key} (${values.size()} ${values.size() > 1 ? 'files' : 'file'}):"
 
@@ -108,7 +108,7 @@ import java.nio.file.Files
             // store chunk info
             Chunks.collectFile( 
                 name:     "summary.txt",
-                storeDir: LogDir,
+                storeDir: "${LogDir}/chunks",
                 sort:     true,
                 newLine:  true 
                 ){ key, files ->
