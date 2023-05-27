@@ -14,4 +14,6 @@
             params.publishDir
             )
 
+        SubsetTarget.out.Chunks
+
     }
