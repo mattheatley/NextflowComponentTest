@@ -1,19 +1,28 @@
 
+/* SUBWORKFLOWS IMPORT */
+
+    subworkflowDir = "../../subworkflows"
+
+    include { Subset_Target as SubsetTarget } from "${subworkflowDir}/local/SubsetTarget"
+
 /* MODULES IMPORT */
 
-    moduleDir = "../../subworkflows"
+    moduleDir = "../../modules"
 
-    include { Subset_Target as SubsetTarget } from "${moduleDir}/local/SubsetTarget"
+    include { Process_Chunk as ProcessChunk } from "${moduleDir}/local/Chunk_2_Process"
+
+
 
 /* WORKFLOW DEFINITION */
 
     workflow SUBWORKFLOW {
 
-        SubsetTarget( 
+        SubsetTarget(
             params.Chunks,
             params.publishDir
-            )
-
-        SubsetTarget.out.Chunks
+            ) 
+        // path Target -> [ [chunk, [files...]],... ]
+        
+        ProcessChunk( SubsetTarget.out.Chunks )
 
     }
