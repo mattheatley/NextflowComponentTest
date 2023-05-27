@@ -33,11 +33,12 @@
             echo "Chunk: ${Chunk}"; touch \$CHUNK
 
             for LINK in "\${STAGED[@]}"; do 
-                
+
                 echo "StagedAs: \$LINK"
                 echo "ReadLink: \$(readlink -f \$LINK)"
                 echo -e "\$LINK\t\$(readlink -f \$LINK)" >> \$CHUNK
                 echo
+
 
             done
             
