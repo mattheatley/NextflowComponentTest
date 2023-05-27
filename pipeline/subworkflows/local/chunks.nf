@@ -23,6 +23,9 @@
             ) 
         // path Target -> [ [chunk, [files...]],... ]
         
-        ProcessChunk( SubsetTarget.out.Chunks )
+        ProcessChunk( 
+            SubsetTarget.out.Chunks,
+            params.Chunks.MD5 
+            )
 
     }

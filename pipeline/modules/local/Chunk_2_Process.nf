@@ -9,11 +9,13 @@
             tuple   val  (Chunk), 
                     path (Files, stageAs: "partition???/*" )
                     // N.B. partitions stage any duplicated basenames seperate
+            val     MD5
         
         output:
 
             tuple   val  (Chunk), 
                     path (Files)
+            path    "*md5", optional: true
 
 
         script:
@@ -30,15 +32,25 @@
 
             CHUNK="chunk${Chunk}.txt"
 
-            echo "Chunk: ${Chunk}"; touch \$CHUNK
+            > \$CHUNK.md5
+            if [ "${MD5 ?: ""}" ]; then
+                > \$CHUNK.md5
+            fi 
 
-            for LINK in "\${STAGED[@]}"; do 
+            for IDX in "\${!STAGED[@]}"; do 
+                
+                LINK="\${STAGED[\$IDX]}"
+                READLINK="\$(readlink -f \$LINK)"
 
+                echo -e "Chunk ${Chunk} File \$((\$IDX+1)) of \${#STAGED[@]}"
                 echo "StagedAs: \$LINK"
                 echo "ReadLink: \$(readlink -f \$LINK)"
-                echo -e "\$LINK\t\$(readlink -f \$LINK)" >> \$CHUNK
-                echo
-
+                
+                echo -e "\$LINK\t\$READLINK" >> \$CHUNK                
+                if [ "${MD5 ?: ""}" ]; then
+                    MD5=\$(md5sum \$READLINK)
+                    echo "\$MD5" >> \$CHUNK.md5
+                fi 
 
             done
             

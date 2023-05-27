@@ -6,6 +6,7 @@
         "FileExt"    : "fna,txt",
         "ByteLimit"  : 10000000,
         "FileLimit"  : null,
-        "verbose"    : true
+        "verbose"    : true,
+        "MD5"        : true
         }
 }
