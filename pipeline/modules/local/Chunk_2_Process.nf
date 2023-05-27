@@ -8,7 +8,7 @@
         
             tuple   val  (Chunk), 
                     path (Files, stageAs: "partition???/*" )
-                    // N.B. seperate partitions stage duplicated basenames
+                    // N.B. partitions stage any duplicated basenames seperate
         
         output:
 
