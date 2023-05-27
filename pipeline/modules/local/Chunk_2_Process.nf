@@ -22,9 +22,9 @@
         output:
 
             tuple   val  (Chunk), 
-                    path (Files),            emit: Chunks
-            path    "*.txt",                 emit: Info
-            path    "*.md5", optional: true, emit: MD5s
+                    path (Files),                 emit: Chunks
+            path    "*.txt",                      emit: Info
+            path    "*.md5",      optional: true, emit: MD5s
 
 
         script:
@@ -39,10 +39,11 @@
 
             "STAGED=(\n${Staged}\n)"+"""
 
-            CHUNK="chunk${Chunk}.txt"
+            CHUNK="chunk${Chunk}"
 
-            > \$CHUNK.md5
-            if [ "${MD5 ?: ''}" ]; then
+            > \$CHUNK.txt
+            if [ "${MD5 == true ?: ''}" ]; then
+                echo "*** Calculating MD5s ***"
                 > \$CHUNK.md5
             fi 
 
@@ -56,7 +57,7 @@
                 echo "ReadLink: \$(readlink -f \$LINK)"
                 
                 echo -e "\$LINK\t\$READLINK" >> \$CHUNK                
-                if [ "${MD5 ?: ''}" ]; then
+                if [ "${MD5 == true ?: ''}" ]; then
                     echo "\$(md5sum \$READLINK)" >> \$CHUNK.md5
                 fi 
 
