@@ -7,21 +7,21 @@ import java.nio.file.Files
         
         take:
 
-            Input
+            Settings
             LogDir
 
 
         main:
 
-            assert  (Input.ByteLimit || Input.FileLimit): "Neither Byte nor File size limits were specified"
-            assert !(Input.ByteLimit && Input.FileLimit): "Both Byte & File size limits were specified"
+            assert  (Settings.ByteLimit || Settings.FileLimit): "Neither Byte nor File size limits were specified"
+            assert !(Settings.ByteLimit && Settings.FileLimit): "Both Byte & File size limits were specified"
 
             // prepare search pattern
             Glob = "**"
             
-            if ( Input.FileExt ){
+            if ( Settings.FileExt ){
 
-                FileExt = Input.FileExt.split(',').collect{ ext -> 
+                FileExt = Settings.FileExt.split(',').collect{ ext -> 
                     ext.replaceAll( '^\\.+', '' ) }
                 
                 Glob += FileExt.size() > 1 ? "{${FileExt.join(',')}}" : FileExt.join(',')
@@ -30,7 +30,7 @@ import java.nio.file.Files
 
             // import target files
             Contents = files(
-                "${Input.TargetPath}/${Glob}", 
+                "${Settings.TargetPath}/${Glob}", 
                 type:        "file", 
                 hidden:      true,
                 followLinks: true
@@ -49,10 +49,9 @@ import java.nio.file.Files
 
             // subset files into chunks
             ChunkMap = [:]
-
-            SizeLimit = Input.ByteLimit ?: Input.FileLimit
-
-            chunk_size  = 0
+            
+            chunk_bytes = 0
+            chunk_files = 0
             files_count = 0
             chunk_count = 0
 
@@ -62,18 +61,28 @@ import java.nio.file.Files
 
                 files_count += 1
 
-                // specify relevant size increment
-                size_increment = Input.ByteLimit ? bytes : 1
+                // calculate cumulative chunk sizes
+                cumulative_bytes = chunk_bytes + bytes
+                cumulative_files = chunk_files + 1
 
-                cumulative_size = chunk_size + size_increment
-
-                // start new chunk & reset; (i) initial file or (ii) cumulative chunk size would exceed limit
-                if ( files_count == 1 || cumulative_size > SizeLimit ){
+                // start new chunk &/or reset
+                if ( 
+                    // initial file 
+                    files_count == 1 || 
+                    // cumulative chunk bytes exceeds byte limit (bytes limit only)
+                    ( Settings.ByteLimit && cumulative_bytes > Settings.ByteLimit) ||
+                    // cumulative chunk files exceeds file limit (files limit only)
+                    ( Settings.FileLimit && cumulative_files > Settings.FileLimit) ||
+                    // cumulative chunk files exceeds max files  (bytes limit only)
+                    ( Settings.ByteLimit && cumulative_files > Settings.FilesMax ) ){
                     chunk_count += 1
-                    chunk_size   = 0
+                    chunk_bytes  = 0
+                    chunk_files  = 0
                     }
+                
                 // record chunk size increase
-                chunk_size += size_increment
+                chunk_bytes += bytes
+                chunk_files += 1
 
                 // create list under relevant chunk as required
                 ChunkMap.containsKey(chunk_count) ? null : ChunkMap.putAt( chunk_count, [] )
@@ -94,7 +103,9 @@ import java.nio.file.Files
 
                 if ( params.Verbose ){
 
-                    println "chunk ${key} (${values.size()} ${values.size() > 1 ? 'files' : 'file'}):"
+                    unit = values.size() > 1 ? 'files' : 'file'
+
+                    println "chunk ${key} (${values.size()} ${unit}):"
 
                     values.each{ file ->
                         

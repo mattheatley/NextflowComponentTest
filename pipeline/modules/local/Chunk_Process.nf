@@ -15,14 +15,14 @@
         input:
         
             tuple   val  (Chunk), 
-                    path (Files, stageAs: "partition???/*" )
+                    path (Files, stageAs: "partition*/*" )
                     // N.B. partitions stage any duplicated basenames seperate
-            val     MD5
+            val     MD5Sum
         
         output:
 
             tuple   val  (Chunk), 
-                    path (Files),                 emit: Chunks
+                    path ("partition*/output_*"), emit: Chunks
             path    "*.txt",                      emit: Info
             path    "*.md5",      optional: true, emit: MD5s
 
@@ -40,24 +40,32 @@
             "STAGED=(\n${Staged}\n)"+"""
 
             CHUNK="chunk${Chunk}"
+            rm -f \$CHUNK*
 
-            > \$CHUNK.txt
-            if [ "${MD5 == true ?: ''}" ]; then
+            if [ "${MD5Sum == true ?: ''}" ]; then
                 echo "*** Calculating MD5s ***"
-                > \$CHUNK.md5
             fi 
 
             for IDX in "\${!STAGED[@]}"; do 
                 
+                # extract individual info
                 LINK="\${STAGED[\$IDX]}"
                 READLINK="\$(readlink -f \$LINK)"
 
+                # log individual processed
                 echo "Chunk ${Chunk} File \$((\$IDX+1)) of \${#STAGED[@]}"
                 echo "StagedAs: \$LINK"
-                echo "ReadLink: \$(readlink -f \$LINK)"
-                
-                echo -e "\$LINK\t\$READLINK" >> \$CHUNK                
-                if [ "${MD5 == true ?: ''}" ]; then
+                echo "ReadLink: \$(readlink -f \$LINK)"                
+                echo -e "\$LINK\t\$READLINK" >> \$CHUNK.txt
+
+                # execute process...
+                PARTITION="\$(dirname \$LINK)"
+                INPUT="\$(basename \$LINK)"
+                OUTPUT="output_\${CHUNK}\${PARTITION}"
+                echo "PROCESSED \$LINK" > \$PARTITION/\$OUTPUT.txt
+
+                # calculate md5 as required
+                if [ "${MD5Sum == true ?: ''}" ]; then
                     echo "\$(md5sum \$READLINK)" >> \$CHUNK.md5
                 fi 
 
