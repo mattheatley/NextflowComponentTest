@@ -16,7 +16,7 @@
         
             tuple   val  (Chunk), 
                     path (Files, stageAs: "partition*/*" )
-                    // N.B. partitions stage any duplicated basenames seperate
+                    // N.B. partitions permit duplicated basenames by staging seperately
             val     MD5Sum
         
         output:
@@ -46,13 +46,14 @@
                 echo "*** Calculating MD5s ***"
             fi 
 
+            # cycle inputs...
             for IDX in "\${!STAGED[@]}"; do 
                 
-                # extract individual info
+                # extract info
                 LINK="\${STAGED[\$IDX]}"
                 READLINK="\$(readlink -f \$LINK)"
 
-                # log individual processed
+                # log current
                 echo "Chunk ${Chunk} File \$((\$IDX+1)) of \${#STAGED[@]}"
                 echo "StagedAs: \$LINK"
                 echo "ReadLink: \$(readlink -f \$LINK)"                
@@ -64,7 +65,7 @@
                 OUTPUT="output_\${CHUNK}\${PARTITION}"
                 echo "PROCESSED \$LINK" > \$PARTITION/\$OUTPUT.txt
 
-                # calculate md5 as required
+                # calculate md5 (as required)
                 if [ "${MD5Sum == true ?: ''}" ]; then
                     echo "\$(md5sum \$READLINK)" >> \$CHUNK.md5
                 fi 
