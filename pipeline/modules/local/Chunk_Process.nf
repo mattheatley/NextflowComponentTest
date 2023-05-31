@@ -7,8 +7,11 @@
         publishDir path : "${params.publishDir}/process",
                 pattern : "*.{txt,md5}",
                  saveAs : { path -> 
-                    subDir = path.endsWith(".md5") ? "md5" : "info"
-                    "${subDir}/${file(path).getName()}" },
+                    subDir = path.endsWith(".md5") 
+                        ? "md5" 
+                        : "info"
+                    "${subDir}/${file(path).getName()}" 
+                    },
                    mode : "copy",
               overwrite : true
 
