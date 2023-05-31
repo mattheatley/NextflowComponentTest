@@ -3,7 +3,9 @@
 
     subworkflowDir = "../../subworkflows"
 
-    include { Subset_Target as SubsetTarget } from "${subworkflowDir}/local/Subset_Target"
+    include { Inputs_Find   as FindInputs   } from "${subworkflowDir}/local/Inputs_Find"
+    include { Inputs_Subset as SubsetInputs } from "${subworkflowDir}/local/Inputs_Subset"
+    include { Counts_Match  as MatchCounts  } from "${subworkflowDir}/local/Counts_Match"
 
 
 /* MODULES IMPORT */
@@ -18,35 +20,24 @@
 
     workflow SUBWORKFLOW {
 
-        SubsetTarget(
-            params.Chunks,
-            params.publishDir
-            ) 
-        // path Target -> [ [chunk, [files...]],... ]
+        FindInputs( params.Target )
+        // path Target -> [ file1, file2... ]
+
+        params.Chunks.LogDir = params.publishDir
         
+        SubsetInputs( 
+            FindInputs.out.Contents,
+            params.Chunks )         
+        // [file1, file2...] -> [ [chunk1, [files...]],[chunk2, [files...]]... ]
+
         ProcessChunk( 
-            SubsetTarget.out.Chunks,
+            SubsetInputs.out.Chunks,
             params.Chunks.MD5Sum
             )
 
-        // check number of inputs & outputs correspond
-        SubsetTarget.out.Chunks.combine(
-            ProcessChunk.out.Chunks, 
-            by: 0 ).subscribe( 
-
-                onNext: { chunk, inputs, outputs ->
-
-                    // stage single paths as lists
-                    outputs = outputs instanceof List 
-                        ?   outputs 
-                        : [ outputs ]
-
-                    assert inputs.size().equals(outputs.size()): 
-                        "Chunk ${chunk}: Different number of outputs (${outputs.size()}) compared to inputs (${inputs.size()})"
-                
-                    },
-                
-                onComplete: { println "Number of inputs & outputs correspond." }
-                )
+        MatchCounts(
+            SubsetInputs.out.Chunks,
+            ProcessChunk.out.Chunks
+            )
 
     }
