@@ -20,6 +20,8 @@
 
     workflow SUBWORKFLOW {
 
+        params.Target.LogDir = params.publishDir
+
         FindInputs( params.Target )
         // path Target -> [ file1, file2... ]
 

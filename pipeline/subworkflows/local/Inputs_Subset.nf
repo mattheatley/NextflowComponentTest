@@ -102,8 +102,8 @@ import java.nio.file.Files
 
             // store chunk info
             Chunks.collectFile( 
-                name:     "summary.txt",
-                storeDir: "${Settings.LogDir}/chunks",
+                name:     "summary_chunks.txt",
+                storeDir: "${Settings.LogDir}/inputs",
                 sort:     true,
                 newLine:  true 
                 ){ key, files ->
@@ -112,7 +112,7 @@ import java.nio.file.Files
                         "${key}\t${file}" }.join('\n') }
 
             Chunks.collectFile( 
-                storeDir: "${Settings.LogDir}/chunks",
+                storeDir: "${Settings.LogDir}/inputs/chunks",
                 sort:     true,
                 newLine:  true 
                 ){ key, files ->

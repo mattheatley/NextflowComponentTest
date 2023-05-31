@@ -10,6 +10,8 @@
 
         main:
 
+            assert file(Settings.Path).exists(): "Path not found; ${Settings.Path}"
+
             // prepare search pattern
             Glob = "**"
             
@@ -30,7 +32,19 @@
                 followLinks: true
                 )
 
+            assert ContentsList.size() > 0: "Files not found; ${Settings.Path}"
+
+
             Channel.fromList( ContentsList ).set{ Contents }
+
+
+            // store chunk info
+            Contents.collectFile( 
+                name:     "summary_inputs.txt",
+                storeDir: "${Settings.LogDir}/inputs",
+                sort:     true,
+                newLine:  true 
+                ){ file -> "${file}" }
 
 
         emit:
