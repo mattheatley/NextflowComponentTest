@@ -3,7 +3,7 @@
 
     subworkflowDir = "../../subworkflows"
 
-    include { Subset_Target as SubsetTarget } from "${subworkflowDir}/local/SubsetTarget"
+    include { Subset_Target as SubsetTarget } from "${subworkflowDir}/local/Subset_Target"
 
 
 /* MODULES IMPORT */

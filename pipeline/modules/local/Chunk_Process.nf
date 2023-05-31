@@ -26,8 +26,8 @@
 
             tuple   val  (Chunk), 
                     path ("partition*/output_*"), emit: Chunks
-            path    "*.txt",                      emit: Info
-            path    "*.md5",      optional: true, emit: MD5s
+            path    "chunk*.txt",                 emit: Info
+            path    "chunk*.md5", optional: true, emit: MD5s
 
 
         script:
