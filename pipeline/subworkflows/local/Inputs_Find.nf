@@ -10,9 +10,8 @@
 
         main:
 
-            assert file(Settings.Path).exists(): "Path not found; ${Settings.Path}"
-
             // prepare search pattern
+            
             Glob = "**"
             
             if ( Settings.FileExt ){
@@ -24,7 +23,11 @@
 
                 }
 
+
             // import target files
+
+            assert file(Settings.Path).exists(): "Path not found; ${Settings.Path}"
+
             ContentsList = files(
                 "${Settings.Path}/${Glob}", 
                 type:        "file", 
@@ -35,10 +38,13 @@
             assert ContentsList.size() > 0: "Files not found; ${Settings.Path}"
 
 
+            // stage as channel
+
             Channel.fromList( ContentsList ).set{ Contents }
 
 
-            // store chunk info
+            // record info
+            
             Contents.collectFile( 
                 name:     "summary_inputs.txt",
                 storeDir: "${Settings.LogDir}/inputs",

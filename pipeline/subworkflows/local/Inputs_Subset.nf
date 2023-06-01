@@ -17,24 +17,25 @@ import java.nio.file.Files
             assert !(Settings.ByteLimit && Settings.FileLimit): "Both Byte & File size limits were specified"
 
 
-            // calculate file sizes
+            // calculate file sizes & sort; smallest -> largest
+
             Contents.map{ file ->
                 
                 long bytes = Files.size(file)
 
                 return [ bytes, file ]
 
-                // sort sublists by size; smallest -> largest
                 }.toSortedList{ 
                     first, second -> first[0] <=> second[0] 
                     }.set{ Sorted }
 
 
+            // subset files into chunks
+
             Sorted.flatMap{ contents ->
 
                 println "\nSubsetting..."
 
-                // subset files into chunks
                 ChunksMap = [:]
                 
                 chunk_bytes = 0
@@ -42,11 +43,11 @@ import java.nio.file.Files
                 files_count = 0
                 chunk_count = 0
 
-                contents.each{bytes, file ->
+                contents.each{ bytes, file ->
 
                     files_count += 1
 
-                    // calculate cumulative chunk sizes
+                    // record expected chunk size
                     cumulative_bytes = chunk_bytes + bytes
                     cumulative_files = chunk_files + 1
 
@@ -70,7 +71,9 @@ import java.nio.file.Files
                     chunk_files += 1
 
                     // create list under relevant chunk as required
-                    ChunksMap.containsKey(chunk_count) ? null : ChunksMap.putAt( chunk_count, [] )
+                    ChunksMap.containsKey(chunk_count) 
+                        ? null 
+                        : ChunksMap.putAt( chunk_count, [] )
 
                     // store file under relevant chunk
                     ChunksMap[chunk_count].add(file)
@@ -78,18 +81,18 @@ import java.nio.file.Files
                     }
 
                 println "Done."
-                fileSummary  = "${files_count} ${files_count > 1 ? 'files'  : 'file'}"
-                chunkSummary = "${chunk_count} ${chunk_count > 1 ? 'chunks' : 'chunk'}"
+                fileSummary  = "${files_count} file${files_count  > 1 ? 's' : ''}"
+                chunkSummary = "${chunk_count} chunk${chunk_count > 1 ? 's' : ''}"
                 println "\nSubset ${fileSummary} into ${chunkSummary}.\n"
 
-                // stage chunks
+
+                // stage as channel
+
                 ChunksList = ChunksMap.collect{ key, values ->
 
                     if ( params.Verbose ){
 
-                        unit = values.size() > 1 ? 'files' : 'file'
-
-                        println "chunk ${key} (${values.size()} ${unit}):"
+                        println "chunk ${key} (${values.size()} file${values.size() > 1 ? 's' : ''}):"
 
                         values.each{ file ->
                             
@@ -100,7 +103,8 @@ import java.nio.file.Files
                 }.set{ Chunks }
                 
 
-            // store chunk info
+            // record info
+
             Chunks.collectFile( 
                 name:     "summary_chunks.txt",
                 storeDir: "${Settings.LogDir}/inputs",
