@@ -20,9 +20,9 @@
     // "${workflow.projectDir}/subworkflows/local"
     subworkflowDir = "../subworkflows/local"
 
-    include { Display_Workflow as DisplayWorkflow } from "${subworkflowDir}/Setup"
+    include { Display_Workflow as DisplayWorkflow } from "${subworkflowDir}/Introspection"
 
-    include { Display_Parameters as DisplayParameters } from "${subworkflowDir}/Setup"
+    include { Display_Parameters as DisplayParameters } from "${subworkflowDir}/Introspection"
 
     include { SUBWORKFLOW as TestComponent } from "${subworkflowDir}/${params.component}"
 

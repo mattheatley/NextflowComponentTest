@@ -25,13 +25,13 @@
 
 
 
-/* SUBWORKFLOW DEFINITION */
+/* WORKFLOW INTROSPECTION */
 
     workflow Display_Workflow {
 
         take:
-            workflow // class nextflow.script.WorkflowMetadata
-            indent
+            WorkflowMeta // class nextflow.script.WorkflowMetadata
+            Indent
 
         main:
 
@@ -54,44 +54,62 @@
 
             padNum = toDisplay.values().flatten{ key -> key.size() }.max()
 
+            seperator = ":"
+                
+            padSep = seperator.size()
+
             toDisplay.each{ category, keySet -> 
                 
-                println("\n${indent}${category}:\n")
+                println("\n${Indent}${category}:\n")
 
                 keySet.each{ key ->
 
-                    subcategory="${key}:"
-                    value = workflow[key]
-                    value = value instanceof List ? value.join(',') : value
-                    println "\t${subcategory.padRight(padNum+1)}\t${value}" }
+                    subcategory="${key}${seperator}"
+                    
+                    value = WorkflowMeta[key]
+                    
+                    value = value instanceof List 
+                        ? value.join(',') 
+                        : value
+
+                    println "\t${subcategory.padRight(padNum+padSep)}\t${value}" }
                     
                 }
                         
     }
 
+
+
+/* PARAMETER INTROSPECTION */
+
     workflow Display_Parameters {
     
         take:
-            params // class nextflow.ScriptBinding.ParamsMap
-            indent
+            ParameterMeta // class nextflow.ScriptBinding.ParamsMap
+            Indent
 
         main:
 
-            println "\n${indent}SETTINGS:\n"
+            println "\n${Indent}SETTINGS:\n"
 
-            flattenedMap = flattenNested(params, '.', [])
+            flattenedMap = flattenNested(ParameterMeta, '.', [])
 
             padNum = flattenedMap.keySet().collect{ key -> key.size() }.max()
+            
+            seperator = ":"
+            
+            padSep = seperator.size()
 
             flattenedMap.each{ key,value ->
 
-                key+=":"
-                println "\t${key.padRight(padNum+1)}\t${value}"
+                key+=seperator
+                
+                println "\t${key.padRight(padNum+padSep)}\t${value}"
                 
                 }
 
         emit:
 
-            paramsFlat = flattenedMap
+            ParameterMap = flattenedMap
 
     }
