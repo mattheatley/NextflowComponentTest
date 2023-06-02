@@ -52,11 +52,13 @@
                     ]
                 ]
 
-            padNum = toDisplay.values().flatten{ key -> key.size() }.max()
+            padVal = toDisplay.values().flatten{ key -> key.size() }.max()
 
             seperator = ":"
                 
             padSep = seperator.size()
+
+            padNum = padVal + padSep
 
             toDisplay.each{ category, keySet -> 
                 
@@ -72,7 +74,7 @@
                         ? value.join(',') 
                         : value
 
-                    println "\t${subcategory.padRight(padNum+padSep)}\t${value}" }
+                    println "\t${subcategory.padRight(padNum)}\t${value}" }
                     
                 }
                         
@@ -94,17 +96,19 @@
 
             flattenedMap = flattenNested(ParameterMeta, '.', [])
 
-            padNum = flattenedMap.keySet().collect{ key -> key.size() }.max()
+            padVal = flattenedMap.keySet().collect{ key -> key.size() }.max()
             
             seperator = ":"
             
             padSep = seperator.size()
 
+            padNum = padVal + padSep
+
             flattenedMap.each{ key,value ->
 
                 key+=seperator
                 
-                println "\t${key.padRight(padNum+padSep)}\t${value}"
+                println "\t${key.padRight(padNum)}\t${value}"
                 
                 }
 

@@ -20,11 +20,11 @@
     // "${workflow.projectDir}/subworkflows/local"
     subworkflowDir = "../subworkflows/local"
 
-    include { Display_Workflow as DisplayWorkflow } from "${subworkflowDir}/Introspection"
+    include { Display_Workflow   as DisplayWorkflow   } from "${subworkflowDir}/Meta_Introspection"
 
-    include { Display_Parameters as DisplayParameters } from "${subworkflowDir}/Introspection"
+    include { Display_Parameters as DisplayParameters } from "${subworkflowDir}/Meta_Introspection"
 
-    include { SUBWORKFLOW as TestComponent } from "${subworkflowDir}/${params.component}"
+    include { SUBWORKFLOW        as TestComponent     } from "${subworkflowDir}/${params.component}"
 
     /* N.B. .nf extension ignored for component module & workflow files */
 

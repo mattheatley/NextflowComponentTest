@@ -1,19 +1,27 @@
 
 /* SUBWORKFLOWS IMPORT */
 
-    subworkflowDir = "../../subworkflows"
+    subworkflowDir   = "../../subworkflows"
+    subworkflowLocal = "${subworkflowDir}/local"
 
-    include { Inputs_Find   as FindInputs   } from "${subworkflowDir}/local/Inputs_Find"
-    include { Inputs_Subset as SubsetInputs } from "${subworkflowDir}/local/Inputs_Subset"
-    include { Counts_Match  as MatchCounts  } from "${subworkflowDir}/local/Counts_Match"
+    include { Inputs_Find   as FindInputs   } from "${subworkflowLocal}/Inputs_Find"
+    include { Inputs_Subset as SubsetInputs } from "${subworkflowLocal}/Inputs_Subset"
 
 
 /* MODULES IMPORT */
 
-    moduleDir = "../../modules"
+    moduleDir   = "../../modules"
+    moduleLocal = "${moduleDir}/local"
+    
+    include { Process_Chunk as ProcessChunk } from "${moduleLocal}/Chunk_Process"
 
-    include { Process_Chunk as ProcessChunk } from "${moduleDir}/local/Chunk_Process"
 
+/* FUNCTIONS IMPORT */
+
+    functionDir   = "../../functions"
+    functionLocal = "${functionDir}/local"
+
+    include { Counts_Match  as MatchCounts  } from "${functionLocal}/Counts_Match"
 
 
 /* WORKFLOW DEFINITION */
@@ -38,6 +46,7 @@
             )
 
         MatchCounts(
+            "CHUNK PROCESS",
             SubsetInputs.out.Chunks,
             ProcessChunk.out.Chunks
             )
