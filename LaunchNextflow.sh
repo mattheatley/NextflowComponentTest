@@ -101,6 +101,8 @@ PARAMDIR="$PIPEDIR/params"
 
 if [ $DIR2RESUME ]; then
     
+    echo -e "\n>>> Inferring settings from directory label."
+
     IFS=_ read -r TAG PROFILE SETTINGS DATE TIME <<< "$DIR2RESUME"
 
 fi
@@ -155,13 +157,11 @@ else
 
         showHelp "Error ~ Directory not found: Check working directory for available options; $WORKDIR"
             
-    elif [ ! $NF_LAUNCH_DIR_OLD == ${NF_LAUNCH_DIR_NEW}_* ]; then # previous launch directory format unexpected
+    elif [[ ! "$NF_LAUNCH_DIR_OLD" == ${NF_LAUNCH_DIR_NEW}_* ]]; then # previous launch directory format unexpected
 
         showHelp "Error ~ Directory format unexpected: Check prefix matches \"$(basename $NF_LAUNCH_DIR_NEW)\"; $NF_LAUNCH_DIR_OLD"
         
     else
-
-        echo -e "\nSettings inferred using directory label."
     
         NF_LAUNCH_SUBDIR=$NF_LAUNCH_DIR_OLD # specify relevant launch directory
     
