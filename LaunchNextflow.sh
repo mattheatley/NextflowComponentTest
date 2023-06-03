@@ -1,38 +1,7 @@
 #!/usr/bin/env bash
 
 
-####################
-# DEPENDENCIES
-####################
-
-# activate user environment
-# source $HOME/.bash_profile
-
-# specify/activate nextflow conda environment
-# CONDA_ENV="nf-core_v2.6_env"
-# conda activate $CONDA_ENV
-
-# UoN-specific singularity steps
-if [[ "$1" == "augusta" ]]; then
-
-    # alter permissions for newly created files (default: umask 0027)
-    umask 0022
-
-    # specify/load singularity environment module
-    SINGULARITY_MOD="singularity/3.4.2"
-    module load $SINGULARITY_MOD
-
-fi
-
-# remove singularity cache directory layers; ~/.singularity/cache
-# singularity cache clean -f
-# remove nextflow singularity cache images; cacheDir
-# rm -r ./singularity
-
-
-####################
 # SETUP 
-####################
 
 # specify help message
 
@@ -42,7 +11,7 @@ cat << EOF
 
 $1
 
-Usage: $(basename $0) -s <system> -p <settings> [-r <directory>]
+Usage: $(basename $0) -s <system> -p <settings> [-r <directory> -e <conda_environment> -c]
 
 -h     Display help.
 
@@ -51,6 +20,10 @@ Usage: $(basename $0) -s <system> -p <settings> [-r <directory>]
 -p     Specify nextflow params-file
 
 -r     Specify previous directory to resume pipeline from
+
+-e     Specify conda environment to activate
+
+-c     Clean up cache and work directories
 
 EOF
 exit 0 
@@ -64,17 +37,21 @@ SETTINGS="default"
 
 # parse arguments
 
-while getopts ':hs:p:r:' OPT; do
+while getopts ':he:s:p:r:c' OPT; do
 
     case "$OPT" in
 
         h) showHelp "Launch script to run & resume nextflow pipelines" ;;
+
+        e) CONDA_ENV="$OPTARG" ;;
 
         s) PROFILE="$OPTARG" ;;
 
         p) SETTINGS="$OPTARG" ;;
 
         r) DIR2RESUME="$OPTARG" ;;
+
+        c) CLEAN=1 ;;
 
         ?) showHelp "Error ~ Incorrect arguments provided" ;;
     
@@ -83,11 +60,26 @@ while getopts ':hs:p:r:' OPT; do
 done; shift "$(($OPTIND -1))"
 
 
-# extract directory label info
 
-if [ $DIR2RESUME ]; then
+# ENVIRONMENT ACTIVATE
 
-    IFS=_ read -r TAG PROFILE SETTINGS DATETIME <<< "$DIR2RESUME"
+if [ $CONDA_ENV ]; then
+
+    source $HOME/.bash_profile # activate user environment
+
+    eval "conda activate $CONDA_ENV" # activate nextflow conda environment
+
+    # check status
+    case "$?" in
+
+        0)  # OK
+            echo -e "\n>>> Activated \"$CONDA_DEFAULT_ENV\" environment" ;;
+
+        ?)  # ERROR
+            echo -e "\nError ~ Setup aborted with exit code $?.\n"
+            exit 0 ;;
+
+    esac
 
 fi
 
@@ -103,6 +95,15 @@ WORKFLOW="$PIPEDIR/main.nf"
 CONFIG="$PIPEDIR/nextflow.config"
 
 PARAMDIR="$PIPEDIR/params"
+
+
+# RESUME SETTINGS
+
+if [ $DIR2RESUME ]; then
+    
+    IFS=_ read -r TAG PROFILE SETTINGS DATE TIME <<< "$DIR2RESUME"
+
+fi
 
 
 # SYSTEM CHECKS
@@ -125,7 +126,7 @@ if [ -z $PARAMETERS ]; then # no parameters provided
 elif [ "${#PARAMETERS[@]}" -gt 1 ]; then # multiple parameter formats found
 
     showHelp "Error ~ Multiple settings found: *** TBC *** ; $(printf "\n\n\t> %s" "${PARAMETERS[@]}")"
-    
+
 fi
 
 
@@ -141,8 +142,10 @@ NF_LAUNCH_DIR_OLD="$WORKDIR/$DIR2RESUME"
 if [ -z $DIR2RESUME ]; then
 
     echo -e "\n*** Starting New Run ***"
-            
-    NF_LAUNCH_SUBDIR="${NF_LAUNCH_DIR_NEW}_$(date '+%Y%m%d%H%M%S')" # label launch directory with datetime
+
+    DATE_TIME=$(date '+%Y.%m.%d_%H.%M.%S') # get current datetime
+    
+    NF_LAUNCH_SUBDIR="${NF_LAUNCH_DIR_NEW}_${DATE_TIME}" # label launch directory
 
 else
 
@@ -158,16 +161,19 @@ else
         
     else
 
+        echo -e "\nSettings inferred using directory label."
+    
         NF_LAUNCH_SUBDIR=$NF_LAUNCH_DIR_OLD # specify relevant launch directory
+    
+        RESUME="-resume"
 
     fi # checks; RESUME
 
 fi # mode; NEW|RESUME
 
 
-####################
-# LAUNCH PIPELINE
-####################
+
+# LAUNCH 
 
 # create & move to launch directory as required
 echo -e "\n>>> Changing To: $NF_LAUNCH_SUBDIR"
@@ -179,35 +185,66 @@ IFS='' read -r -d '' CMD << EOF
     nextflow \\
     -C $CONFIG \\
     run $WORKFLOW \\
+    $RESUME \\
     -profile $PROFILE \\
     -params-file $PARAMETERS
 EOF
 
-# execute nextflow 
 echo -e "\nEXECUTING:\n\n$CMD\n"
-eval "$CMD"
+eval "$CMD" # execute nextflow 
+
+# check status
+case "$?" in
+
+    0)  # OK
+        echo -e "\n>>> Workflow Complete." ;;
+
+    ?)  # ERROR
+        echo -e "\nError ~ Workflow aborted with exit code $?.\n"
+        exit 0 ;; 
+
+esac
 
 
 # PLOT DAG
 
 DOT=$(which dot) # check graphviz installed
 
-DAG=$(ls -t logs/reports*/*.dot 2> /dev/null | head -n 1) # fin latest dag; error suppressed
+DAG=$(ls -t logs/reports*/*.dot 2> /dev/null | head -n 1) # find latest dag; error suppressed
 
 if [ -z $DOT ] || [ -z $DAG ]; then # DAG dependencies missing
 
-    echo -e "\n*** Unable to plot DAG ***\n"; exit 0
+    echo -e "\n*** Unable to plot DAG ***"
 
 else # Graphiv installed & DAG found
 
-    echo -e "\nGenerating DAG\n"
+    echo -e "\n>>> Generating DAG..."
 
-    # execute graphviz
-    COMMAND="dot -Tpdf $DAG -O"
-    eval $COMMAND
+    eval "dot -Tpdf $DAG -O" # execute graphviz
+    
+    eval "cp ${DAG}.pdf $WORKDIR/dag_latest.pdf" # publish latest dag
 
-    # publish latest dag
-    COMMAND="cp ${DAG}.pdf $WORKDIR/dag_latest.pdf"
-    eval $COMMAND
+    echo -e ">>> Done."
 
-fi # checks; DAG
+fi # checks; plot
+
+
+# CLEAN UP
+
+if [ $CLEAN ]; then
+    
+    echo -e "\n>>> Cleaning up workflow directory..."
+
+    eval "nextflow clean -force -keep-logs -quiet -but none" # execute clean
+
+    echo -e ">>> Done."
+
+    # remove singularity cache directory layers; ~/.singularity/cache
+    # singularity cache clean -f
+
+    # remove nextflow singularity cache images; cacheDir
+    # rm -r ./singularity
+
+fi # checks; clean
+
+echo -e "\n>>> Finished.\n"
