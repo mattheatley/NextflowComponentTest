@@ -88,6 +88,8 @@ else
 
     IFS=_ read -r TAG PROFILE SETTINGS DATE TIME <<< "$DIR2RESUME"
 
+    echo -e "\n*** Previous Settings Inferred ***"
+
 fi
 
 
