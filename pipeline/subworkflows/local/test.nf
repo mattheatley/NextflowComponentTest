@@ -6,11 +6,14 @@ process MODULE {
 
     /* DIRECTIVES (OPTIONAL) */
 
-        /* Submitted process > PROCESS_NAME (TAG) */
-        tag "${INPUT_VAL1}${INPUT_VAL2}"
-
         /* print stdout */
         debug true
+
+        /* control input order */
+        fair true
+
+        /* Submitted process > PROCESS_NAME (TAG) */
+        tag "TAG-${INPUT_VAL1}${INPUT_VAL2}"
 
 
     /* DECLARATIONS (REQUIRED) */
@@ -23,8 +26,12 @@ process MODULE {
         
         output:
 
-            tuple val(INPUT_VAL1), val(INPUT_VAL2), emit: PROCESS_INFO
-            stdout                                  emit: PROCESS_STD
+            tuple   val(INPUT_VAL1), 
+                    val(INPUT_VAL2),
+                    val(task.index),
+                    emit: PROCESS_INFO
+            
+            stdout  emit: PROCESS_STD
 
 
         /* define [ script | shell | exec ] */
@@ -42,7 +49,7 @@ process MODULE {
         script:
 
             """
-            echo "executing: ${task.process}"
+            echo "executing: ${task.process} TASK ${task.index}"
             echo "processing: ${INPUT_VAL1} ${INPUT_VAL2}"
             """
             
@@ -59,8 +66,8 @@ process MODULE {
     workflow SUBWORKFLOW {
 
         /* define channels */
-        CHANNEL_VAL1 = Channel.of(  1,   2,   3,  )
-        CHANNEL_VAL2 = Channel.of( 'A', 'B', 'C', )
+        CHANNEL_VAL1 = Channel.fromList(  1..26   )
+        CHANNEL_VAL2 = Channel.fromList( 'A'..'Z' )
 
         /* manipulate channels */
         CHANNEL_MERGED = CHANNEL_VAL1.merge(CHANNEL_VAL2)
@@ -73,6 +80,7 @@ process MODULE {
         CHANNEL_PROCESS_STD  = MODULE.out.PROCESS_STD
 
         /* view process outputs */
-        CHANNEL_PROCESS_INFO.view( { val1, val2 -> "\ninputs: ${val1} ${val2}" } )
+        CHANNEL_PROCESS_INFO.view( { val1, val2, idx -> 
+            "\nidx ${idx} ; ${val1}${val2}" } )
 
         }
