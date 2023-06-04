@@ -14,14 +14,21 @@
                 debug params.DEBUG
 
             input:
-                tuple path(InputPath), val(OutputPath)
-                tuple val(Flags), val(Archive), val(Extract)
+                
+                tuple   path(InputPath), 
+                        val(OutputPath)
+                
+                tuple   val(Flags), 
+                        val(Archive), 
+                        val(Extract)
 
             output:
                 // to publish
-                path(OutputPath), emit: tarOutput
+                path    OutputPath, 
+                        emit: tarOutput
                 // to move
-                path(InputPath),  emit: tarInput
+                path    InputPath,  
+                        emit: tarInput
 
             script:
                 if( Archive.equals(true) ) {
@@ -69,10 +76,14 @@
             assert tarModes.contains( params.tarMode )
 
             // follow symlinks
-            drefMode = ( params.tarMode == ModeArchive )                ? "h"  : ""
+            drefMode = ( params.tarMode == ModeArchive ) 
+                ? "h"
+                : ""
 
             // compress archive
-            gzipMode = ( params.tarMode == ModeArchive && params.tarZ ) ? "z"  : ""
+            gzipMode = ( params.tarMode == ModeArchive && params.tarZ )
+                ? "z"
+                : ""
 
             tarFlags = "${params.tarMode}${drefMode}${gzipMode}vf"
 
@@ -90,7 +101,9 @@
             def (TypeFile, TypeDir, TypeAny) = InputTypes = [ "file", "dir", "any" ]
             assert InputTypes.contains( params.InputType )
 
-            InputGlob  = ( params.tarMode.equals(ModeArchive) ) ? params.InputGlob : "*{.tar,tar.gz}"
+            InputGlob  = ( params.tarMode.equals(ModeArchive) ) 
+                ? params.InputGlob
+                : "*{.tar,tar.gz}"
 
             InputFiles = files(
                 "${params.InputDir}/${InputGlob}", 
@@ -103,13 +116,19 @@
 
         /* output setup */
 
-            tarSubDir = ( params.tarMode == ModeArchive                     ) ? "Archived"       : "Extracted"
+            tarSubDir = ( params.tarMode == ModeArchive ) 
+                ? "Archived"
+                : "Extracted"
 
-            params.tarDir    = "${params.InputDir}/${tarSubDir}"
+            params.tarDir = "${params.InputDir}/${tarSubDir}"
 
-            gzipExt   = ( params.tarMode.equals(ModeArchive) && params.tarZ ) ? ".gz"            : ""
+            gzipExt = ( params.tarMode.equals(ModeArchive) && params.tarZ ) 
+                ? ".gz"
+                : ""
 
-            OutputExt = ( params.tarMode.equals(ModeArchive)                ) ? ".tar${gzipExt}" : ""
+            OutputExt = ( params.tarMode.equals(ModeArchive) ) 
+                ? ".tar${gzipExt}"
+                : ""
 
             // modify file extensions
             tarChannel = Channel.fromList( InputFiles ).map(

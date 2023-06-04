@@ -29,6 +29,21 @@ EOF
 exit 0 
 }
 
+exec() {
+
+eval "$1"
+
+case "$?" in
+
+    0)  ;;
+
+    ?)  # ERROR
+        echo -e "\nError ~ Execution aborted with exit code $?.\n"
+        exit 0 ;; 
+
+esac
+
+}
 
 # specify defaults
 
@@ -61,30 +76,22 @@ done; shift "$(($OPTIND -1))"
 
 
 
-# ENVIRONMENT ACTIVATE
+# RESUME SETTINGS
 
-if [ $CONDA_ENV ]; then
+if [ -z $DIR2RESUME ]; then
 
-    source $HOME/.bash_profile # activate user environment
+echo -e "\n*** Starting New Run ***"
 
-    eval "conda activate $CONDA_ENV" # activate nextflow conda environment
+else
+    
+    echo -e "\n*** Resuming Old Run ***"
 
-    # check status
-    case "$?" in
-
-        0)  # OK
-            echo -e "\n>>> Activated \"$CONDA_DEFAULT_ENV\" environment" ;;
-
-        ?)  # ERROR
-            echo -e "\nError ~ Setup aborted with exit code $?.\n"
-            exit 0 ;;
-
-    esac
+    IFS=_ read -r TAG PROFILE SETTINGS DATE TIME <<< "$DIR2RESUME"
 
 fi
 
 
-# specify working directory & pipeline struture
+# SPECIFY PIPELINE STRUCTURE
 
 WORKDIR="$(pwd)"
 
@@ -97,18 +104,24 @@ CONFIG="$PIPEDIR/nextflow.config"
 PARAMDIR="$PIPEDIR/params"
 
 
-# RESUME SETTINGS
+# ACTIVATE ENVIRONMENT
 
-if [ $DIR2RESUME ]; then
+if [ $CONDA_ENV ]; then
+
+    echo -e "\n>>> Running setup..."
+
+    exec "source $HOME/.bash_profile" # activate user environment
+
+    exec "conda activate $CONDA_ENV" # activate nextflow conda environment
+
+    echo -e "<<< Done."
     
-    echo -e "\n>>> Inferring settings from directory label."
-
-    IFS=_ read -r TAG PROFILE SETTINGS DATE TIME <<< "$DIR2RESUME"
+    echo -e "\n*** Activated \"$CONDA_DEFAULT_ENV\" Environment ***"
 
 fi
 
 
-# SYSTEM CHECKS
+# CHECK SYSTEM
 
 if [ -z $PROFILE ]; then # no profile provided
 
@@ -117,7 +130,7 @@ if [ -z $PROFILE ]; then # no profile provided
 fi
 
 
-# SETTINGS CHECKS; TBC
+# CHECK SETTINGS; TBC
 
 PARAMETERS=($(ls -1 $PARAMDIR/$SETTINGS.{json,yml,yaml} 2> /dev/null)) # list parameters found; error suppressed
 
@@ -132,7 +145,7 @@ elif [ "${#PARAMETERS[@]}" -gt 1 ]; then # multiple parameter formats found
 fi
 
 
-# RESUME CHECKS
+# CHECK PREVIOUS LAUNCH
 
 # specify launch directory
 DIR2START="launch_${PROFILE}_${SETTINGS}"
@@ -143,15 +156,11 @@ NF_LAUNCH_DIR_OLD="$WORKDIR/$DIR2RESUME"
 
 if [ -z $DIR2RESUME ]; then
 
-    echo -e "\n*** Starting New Run ***"
-
     DATE_TIME=$(date '+%Y.%m.%d_%H.%M.%S') # get current datetime
     
     NF_LAUNCH_SUBDIR="${NF_LAUNCH_DIR_NEW}_${DATE_TIME}" # label launch directory
 
 else
-
-    echo -e "\n*** Resuming Old Run ***"
 
     if [ ! -d $NF_LAUNCH_DIR_OLD ]; then # previous launch directory not found
 
@@ -173,15 +182,15 @@ fi # mode; NEW|RESUME
 
 
 
-# LAUNCH 
+# LAUNCH WORKFLOW
 
-# create & move to launch directory as required
-echo -e "\n>>> Changing To: $NF_LAUNCH_SUBDIR"
-mkdir -p $NF_LAUNCH_SUBDIR; cd $NF_LAUNCH_SUBDIR
-echo -e "\n>>> Launching From: $(pwd)"
+echo -e "\n>>> Preparing launch..."
 
-# specify launch command
-IFS='' read -r -d '' CMD << EOF
+exec "mkdir -p $NF_LAUNCH_SUBDIR; cd $NF_LAUNCH_SUBDIR" # create/move to launch directory
+
+echo -e "<<< Done."
+
+IFS='' read -r -d '' COMMAND << EOF
     nextflow \\
     -C $CONFIG \\
     run $WORKFLOW \\
@@ -190,20 +199,10 @@ IFS='' read -r -d '' CMD << EOF
     -params-file $PARAMETERS
 EOF
 
-echo -e "\nEXECUTING:\n\n$CMD\n"
-eval "$CMD" # execute nextflow 
+echo -e "\nEXECUTING:\n\n$COMMAND\n"
 
-# check status
-case "$?" in
+exec "$COMMAND" # execute nextflow 
 
-    0)  # OK
-        echo -e "\n>>> Workflow Complete." ;;
-
-    ?)  # ERROR
-        echo -e "\nError ~ Workflow aborted with exit code $?.\n"
-        exit 0 ;; 
-
-esac
 
 
 # PLOT DAG
@@ -220,11 +219,11 @@ else # Graphiv installed & DAG found
 
     echo -e "\n>>> Generating DAG..."
 
-    eval "dot -Tpdf $DAG -O" # execute graphviz
+    exec "dot -Tpdf $DAG -O" # execute graphviz
     
-    eval "cp ${DAG}.pdf $WORKDIR/dag_latest.pdf" # publish latest dag
+    exec "cp ${DAG}.pdf $WORKDIR/dag_latest.pdf" # publish latest dag
 
-    echo -e ">>> Done."
+    echo -e "<<< Done."
 
 fi # checks; plot
 
@@ -235,9 +234,13 @@ if [ $CLEAN ]; then
     
     echo -e "\n>>> Cleaning up workflow directory..."
 
-    eval "nextflow clean -force -keep-logs -quiet -but none" # execute clean
+    exec "nextflow clean -force -keep-logs -quiet -but none" # execute clean
 
-    echo -e ">>> Done."
+    exec "tar -cf CommandFiles.tar work" # archive .command files
+
+    exec "rm -r work" # remove cleaned work directory
+
+    echo -e "<<< Done."
 
     # remove singularity cache directory layers; ~/.singularity/cache
     # singularity cache clean -f
@@ -247,4 +250,4 @@ if [ $CLEAN ]; then
 
 fi # checks; clean
 
-echo -e "\n>>> Finished.\n"
+echo -e "\nFINISHED\n"
