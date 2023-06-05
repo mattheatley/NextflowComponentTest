@@ -211,7 +211,7 @@ exec "$COMMAND" # execute nextflow
 
 DOT=$(which dot) # check graphviz installed
 
-DAG=$(ls -t logs/reports*/*.dot 2> /dev/null | head -n 1) # find latest dag; error suppressed
+DAG=$(ls -t logs/*/*.dot 2> /dev/null | head -n 1) # find latest dag; error suppressed
 
 if [ -z $DOT ] || [ -z $DAG ]; then # DAG dependencies missing
 

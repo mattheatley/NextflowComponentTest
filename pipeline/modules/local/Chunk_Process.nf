@@ -2,6 +2,8 @@
 
     process Process_Chunk {
         
+        tag "chunk${Chunk}"
+
         debug params.Verbose ?: false
 
         publishDir path : "${params.publishDir}/process",
