@@ -238,7 +238,7 @@ if [ $CLEAN ]; then
 
     exec "nextflow clean -force -keep-logs -quiet -but none" # execute clean
 
-    exec "tar -cf CommandFiles.tar work" # archive .command files
+    exec "tar -cf workClean.tar work" # archive .command files
 
     exec "rm -r work" # remove cleaned work directory
 
