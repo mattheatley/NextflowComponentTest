@@ -27,3 +27,23 @@
                 )
 
         }
+
+
+
+    def Interfaces_Match( Chunk, Label, Inputs, Outputs ) {
+
+        // stage single values as lists
+        Interfaces = [ Inputs, Outputs ].collect{ values -> 
+
+            values = values instanceof List 
+                ?   values 
+                : [ values ] }
+
+        (Inputs, Outputs) = Interfaces
+
+        // compare interface sizes
+        assert Inputs.size().equals(Outputs.size()): 
+            "${Label} Chunk ${Chunk}: Differing inputs (${Inputs.size()}) & outputs (${Outputs.size()})"
+
+        }
+

@@ -11,7 +11,7 @@
                  saveAs : { path -> 
                     subDir = path.endsWith(".md5") 
                         ? "md5" 
-                        : "info"
+                        : "outputs"
                     "${subDir}/${file(path).getName()}" 
                     },
                    mode : "copy",
@@ -27,9 +27,18 @@
         output:
 
             tuple   val  (Chunk), 
-                    path ("partition*/output_*"), emit: Chunks
-            path    "chunk*.txt",                 emit: Info
-            path    "chunk*.md5", optional: true, emit: MD5s
+                    path ("partition*/output_*"),
+                    emit: Chunks
+
+            tuple   val  (Chunk), 
+                    path (Files),
+                    path ("partition*/output_*"),
+                    emit: ChunksNew
+
+
+            path    "chunk*.md5", 
+                    optional: true, 
+                    emit: MD5s
 
 
         script:

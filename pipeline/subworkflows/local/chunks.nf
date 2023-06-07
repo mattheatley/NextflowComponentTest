@@ -21,7 +21,11 @@
     functionDir   = "../../functions"
     functionLocal = "${functionDir}/local"
 
-    include { Counts_Match  as MatchCounts  } from "${functionLocal}/Counts_Match"
+    include { Counts_Match      as matchCounts     } from "${functionLocal}/Counts_Match"
+
+    include { Interfaces_Match  as matchInterfaces } from "${functionLocal}/Counts_Match"
+
+
 
 
 /* WORKFLOW DEFINITION */
@@ -45,10 +49,25 @@
             params.Chunks.MD5Sum
             )
 
-        MatchCounts(
+        matchCounts(
             "CHUNK PROCESS",
             SubsetInputs.out.Chunks,
             ProcessChunk.out.Chunks
+            )
+
+
+        ProcessChunk.out.ChunksNew.subscribe(
+
+            onNext: { info ->
+
+                (chunk, inputs, outputs, dummy) = info
+                
+                matchInterfaces(chunk, "OUTPUTS", inputs, outputs )
+
+                },
+
+            onComplete: { println "Interface sizes match." }
+            
             )
 
     }
