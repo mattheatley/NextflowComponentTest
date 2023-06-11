@@ -25,6 +25,8 @@ Usage: $(basename $0) -s <system> -p <settings> [-r <directory> -e <conda_enviro
 
 -c     Clean up cache and work directories
 
+-t     Test run
+
 EOF
 exit 0 
 }
@@ -52,7 +54,7 @@ SETTINGS="default"
 
 # parse arguments
 
-while getopts ':he:s:p:r:c' OPT; do
+while getopts ':he:s:p:r:ct' OPT; do
 
     case "$OPT" in
 
@@ -67,6 +69,8 @@ while getopts ':he:s:p:r:c' OPT; do
         r) DIR2RESUME="$OPTARG" ;;
 
         c) CLEAN=1 ;;
+
+        t) TEST=1 ;;
 
         ?) showHelp "Error ~ Incorrect arguments provided" ;;
     
@@ -183,6 +187,15 @@ else
 fi # mode; NEW|RESUME
 
 
+# TEST MODE
+
+if [ $TEST ]; then
+
+    STUB="-stub"
+
+fi
+
+
 
 # LAUNCH WORKFLOW
 
@@ -197,6 +210,7 @@ IFS='' read -r -d '' COMMAND << EOF
     -C $CONFIG \\
     run $WORKFLOW \\
     $RESUME \\
+    $STUB \\
     -profile $PROFILE \\
     -params-file $PARAMETERS
 EOF

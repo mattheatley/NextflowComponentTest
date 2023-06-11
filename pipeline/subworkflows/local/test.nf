@@ -24,14 +24,12 @@ process MODULE {
 
             tuple   val(INPUT_VAL1), 
                     val(INPUT_VAL2)
-            path    INPUT_PATH, stageAs: "blah/*"
         
         output:
 
             tuple   val(INPUT_VAL1), 
                     val(INPUT_VAL2),
                     val(task.index),
-                    path("blah/*", includeInputs:true, followLinks:true),
                     emit: PROCESS_INFO
             
             stdout  emit: PROCESS_STD
@@ -50,17 +48,21 @@ process MODULE {
         /* N.B. template.sh should be located in templates/ subdir */
 
         script:
-
+        
             """
             echo "executing: ${task.process} TASK ${task.index}"
             echo "processing: ${INPUT_VAL1} ${INPUT_VAL2}"
-            echo "${INPUT_VAL1}_${INPUT_VAL2}" > blah/${INPUT_VAL1}_${INPUT_VAL2}.txt
             """
             
         /* define test [ script | shell | exec ] (-stub-run / -stub) */
 
-        //stub:
+        stub:
 
+            """
+            echo "TEST MODE"
+            echo "executing: ${task.process} TASK ${task.index}"
+            echo "processing: ${INPUT_VAL1} ${INPUT_VAL2}"
+            """
     } 
 
 
@@ -70,29 +72,23 @@ process MODULE {
     workflow SUBWORKFLOW {
         
         Path2Repo = "/Users/matt.heatley/Desktop"
-        Dir2Stage = "${Path2Repo}/NextflowComponentTest/additional/dir2stage"
 
         /* define channels */
-        CHANNEL_VAL1 = Channel.fromList(  1..26   )
-        CHANNEL_VAL2 = Channel.fromList( 'A'..'Z' )
-        
-        Content2Stage = files("${Dir2Stage}/*")
-        Content2Stage.each{ file -> 
-            println "> ${file}" }
-        CHANNEL_PATH = Channel.value(Content2Stage)
+        CHANNEL_VAL1 = Channel.fromList(  1..5   )
+        CHANNEL_VAL2 = Channel.fromList( 'A'..'E' )
 
         /* manipulate channels */
         CHANNEL_MERGED = CHANNEL_VAL1.merge(CHANNEL_VAL2)
 
         /* run process */
-        MODULE( CHANNEL_MERGED, CHANNEL_PATH )
+        MODULE( CHANNEL_MERGED )
 
         /* extract process outputs */
         CHANNEL_PROCESS_INFO = MODULE.out.PROCESS_INFO
         CHANNEL_PROCESS_STD  = MODULE.out.PROCESS_STD
 
         /* view process outputs */
-        CHANNEL_PROCESS_INFO.view( { val1, val2, idx, paths -> 
+        CHANNEL_PROCESS_INFO.view( { val1, val2, idx -> 
             "\nidx ${idx} ; ${val1}${val2}\n" } )
 
 
