@@ -48,7 +48,7 @@ process MODULE {
         /* N.B. template.sh should be located in templates/ subdir */
 
         script:
-        
+            
             """
             echo "executing: ${task.process} TASK ${task.index}"
             echo "processing: ${INPUT_VAL1} ${INPUT_VAL2}"

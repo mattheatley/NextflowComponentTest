@@ -119,8 +119,6 @@ if [ $CONDA_ENV ]; then
     exec "source $HOME/.bash_profile" # activate user environment
 
     exec "conda activate $CONDA_ENV" # activate nextflow conda environment
-
-    echo -e "<<< Done."
     
     echo -e "\n*** Activated \"$CONDA_DEFAULT_ENV\" Environment ***"
 
@@ -151,10 +149,20 @@ elif [ "${#PARAMETERS[@]}" -gt 1 ]; then # multiple parameter formats found
 fi
 
 
+# TEST MODE
+
+if [ $TEST ]; then
+
+    DRYRUN=".DRYRUN"
+    STUB="-stub"
+
+fi
+
+
 # CHECK PREVIOUS LAUNCH
 
 # specify launch directory
-DIR2START="launch_${PROFILE}_${SETTINGS}"
+DIR2START="launch_${PROFILE}_${SETTINGS}${DRYRUN}"
 
 NF_LAUNCH_DIR_NEW="$WORKDIR/$DIR2START"
 
@@ -187,23 +195,12 @@ else
 fi # mode; NEW|RESUME
 
 
-# TEST MODE
-
-if [ $TEST ]; then
-
-    STUB="-stub"
-
-fi
-
-
 
 # LAUNCH WORKFLOW
 
-echo -e "\n>>> Preparing launch..."
+echo -e "\n>>> LaunchDir: $(basename $NF_LAUNCH_SUBDIR)"
 
 exec "mkdir -p $NF_LAUNCH_SUBDIR; cd $NF_LAUNCH_SUBDIR" # create/move to launch directory
-
-echo -e "<<< Done."
 
 IFS='' read -r -d '' COMMAND << EOF
     nextflow \\
@@ -214,6 +211,8 @@ IFS='' read -r -d '' COMMAND << EOF
     -profile $PROFILE \\
     -params-file $PARAMETERS
 EOF
+
+COMMAND=$(grep -v '^\s*\\' <<< "$COMMAND")
 
 echo -e "\nEXECUTING:\n\n$COMMAND\n"
 
@@ -239,8 +238,6 @@ else # Graphiv installed & DAG found
     
     exec "cp ${DAG}.pdf $WORKDIR/dag_latest.pdf" # publish latest dag
 
-    echo -e "<<< Done."
-
 fi # checks; plot
 
 
@@ -255,8 +252,6 @@ if [ $CLEAN ]; then
     exec "tar -cf workClean.tar work" # archive .command files
 
     exec "rm -r work" # remove cleaned work directory
-
-    echo -e "<<< Done."
 
     # remove singularity cache directory layers; ~/.singularity/cache
     # singularity cache clean -f
