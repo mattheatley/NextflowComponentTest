@@ -28,7 +28,9 @@ Usage: $(basename $0) -s <system> -p <settings> [-r <directory> -e <conda_enviro
 -t     Test run
 
 EOF
+
 exit 0 
+
 }
 
 exec() {
@@ -41,6 +43,9 @@ case "$?" in
 
     ?)  # ERROR
         echo -e "\nError ~ Execution aborted with exit code $?.\n"
+
+        echo -e "\n>>> ResumeDir: $(basename $NF_LAUNCH_SUBDIR)"
+
         exit 0 ;; 
 
 esac
@@ -261,4 +266,6 @@ if [ $CLEAN ]; then
 
 fi # checks; clean
 
-echo -e "\nFINISHED\n"
+echo -e "\n>>> ResultDir: $(basename $NF_LAUNCH_SUBDIR)"
+
+echo -e "\nDONE\n"
