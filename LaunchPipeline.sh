@@ -1,17 +1,15 @@
 #!/usr/bin/env bash
 
-
 # SETUP 
 
 # specify help message
-
 showHelp() {
     
 cat << EOF  
 
 $1
 
-Usage: $(basename $0) -s <system> -p <settings> [-r <directory> -e <conda_environment> -c]
+Usage: $(basename $LAUNCHER) -s <system> -p <settings> [-r <directory> -e <conda_environment> -c -t -q]
 
 -h     Display help.
 
@@ -26,6 +24,8 @@ Usage: $(basename $0) -s <system> -p <settings> [-r <directory> -e <conda_enviro
 -c     Clean up cache and work directories
 
 -t     Test run
+
+-q     Launch nextflow via qsub
 
 EOF
 
@@ -42,9 +42,9 @@ case "$?" in
     0)  ;;
 
     ?)  # ERROR
-        echo -e "\nError ~ Execution aborted with exit code $?.\n"
-
         echo -e "\n>>> ResumeDir: $(basename $NF_LAUNCH_SUBDIR)"
+
+        echo -e "\nError ~ Execution aborted with exit code $?.\n"
 
         exit 0 ;; 
 
@@ -52,14 +52,12 @@ esac
 
 }
 
-# specify defaults
-
-SETTINGS="default"
-
-
 # parse arguments
 
-while getopts ':he:s:p:r:ct' OPT; do
+OPTARGS="$@"
+SETTINGS="default"
+
+while getopts ':he:s:p:r:ctq' OPT; do
 
     case "$OPT" in
 
@@ -77,6 +75,8 @@ while getopts ':he:s:p:r:ct' OPT; do
 
         t) TEST=1 ;;
 
+        q) QSUB=1 ;;
+
         ?) showHelp "Error ~ Incorrect arguments provided" ;;
     
     esac
@@ -84,12 +84,11 @@ while getopts ':he:s:p:r:ct' OPT; do
 done; shift "$(($OPTIND -1))"
 
 
-
 # RESUME SETTINGS
 
-if [ -z $DIR2RESUME ]; then
+if [ -z "$DIR2RESUME" ]; then
 
-echo -e "\n*** Starting New Run ***"
+    echo -e "\n*** Starting New Run ***"
 
 else
     
@@ -104,7 +103,9 @@ fi
 
 # SPECIFY PIPELINE STRUCTURE
 
-WORKDIR="$(pwd)"
+LAUNCHER=$(readlink -f $0)
+
+WORKDIR=$(dirname $LAUNCHER)
 
 PIPEDIR="$WORKDIR/pipeline"
 
@@ -167,7 +168,7 @@ fi
 # CHECK PREVIOUS LAUNCH
 
 # specify launch directory
-DIR2START="launch_${PROFILE}_${SETTINGS}${DRYRUN}"
+DIR2START="launch_${PROFILE}_${SETTINGS}"
 
 NF_LAUNCH_DIR_NEW="$WORKDIR/$DIR2START"
 
@@ -177,7 +178,7 @@ if [ -z $DIR2RESUME ]; then
 
     DATE_TIME=$(date '+%Y.%m.%d_%H.%M.%S') # get current datetime
     
-    NF_LAUNCH_SUBDIR="${NF_LAUNCH_DIR_NEW}_${DATE_TIME}" # label launch directory
+    NF_LAUNCH_SUBDIR="${NF_LAUNCH_DIR_NEW}_${DATE_TIME}${DRYRUN}" # label launch directory
 
 else
 
@@ -201,71 +202,120 @@ fi # mode; NEW|RESUME
 
 
 
-# LAUNCH WORKFLOW
+# PREPARE LAUNCH
 
-echo -e "\n>>> LaunchDir: $(basename $NF_LAUNCH_SUBDIR)"
+# create launch directory
+exec "mkdir -p $NF_LAUNCH_SUBDIR"
 
-exec "mkdir -p $NF_LAUNCH_SUBDIR; cd $NF_LAUNCH_SUBDIR" # create/move to launch directory
-
-IFS='' read -r -d '' COMMAND << EOF
+# specify pipeline execution command
+IFS='' read -r -d '' LAUNCH_COMMAND << EOF
     nextflow \\
-    -C $CONFIG \\
-    run $WORKFLOW \\
-    $RESUME \\
-    $STUB \\
-    -profile $PROFILE \\
-    -params-file $PARAMETERS
+        -C $CONFIG \\
+        run $WORKFLOW \\
+        $RESUME \\
+        $STUB \\
+        -profile $PROFILE \\
+        -params-file $PARAMETERS
 EOF
 
-COMMAND=$(grep -v '^\s*\\' <<< "$COMMAND")
+LAUNCH_COMMAND=$(grep -v '^\s*\\' <<< "$LAUNCH_COMMAND")
 
-echo -e "\nEXECUTING:\n\n$COMMAND\n"
-
-exec "$COMMAND" # execute nextflow 
+echo -e "\nEXECUTING:\n\n$LAUNCH_COMMAND\n"
 
 
 
-# PLOT DAG
+# LAUNCH
 
-DOT=$(which dot) # check graphviz installed
+if [ "$QSUB" ]; then
 
-DAG=$(ls -t logs/*/*.dot 2> /dev/null | head -n 1) # find latest dag; error suppressed
+    # RESUBMIT
 
-if [ -z $DOT ] || [ -z $DAG ]; then # DAG dependencies missing
+    # remove qsub flag
+    QSUBARGS=$(sed 's/ -q//g' <<< "$OPTARGS")
 
-    echo -e "\n*** Unable to plot DAG ***"
+    # set to resume
+    if [ -z "$DIR2RESUME" ]; then
 
-else # Graphiv installed & DAG found
+        QSUBARGS+=" -r $(basename $NF_LAUNCH_SUBDIR)"
 
-    echo -e "\n>>> Generating DAG..."
+    fi
 
-    exec "dot -Tpdf $DAG -O" # execute graphviz
-    
-    exec "cp ${DAG}.pdf $WORKDIR/dag_latest.pdf" # publish latest dag
+    # specify wrapper resubmission command
+    IFS='' read -r -d '' RESUBMIT_COMMAND << EOF
+    qsub \\
+        -N launch \\
+        -P applications \\
+        -q all.q \\
+        -l m_mem_free=2G \\
+        -j y \\
+        -b y \\
+        -wd $NF_LAUNCH_SUBDIR \\
+        $LAUNCHER \\
+        $QSUBARGS 
+EOF
 
-fi # checks; plot
+    echo -e "\nRESUBMITTING:\n\n$RESUBMIT_COMMAND\n"
+
+    exec "$RESUBMIT_COMMAND"
+
+    echo -e "\n>>> Re-Launched via qsub.\n"
+
+else
+
+    # LAUNCH
+
+    # move to launch directory
+    exec "cd $NF_LAUNCH_SUBDIR"
+
+    echo -e "\n>>> LaunchDir: $(basename $(pwd))\n"
+
+    # launch pipeline
+    exec "$LAUNCH_COMMAND"
 
 
-# CLEAN UP
+    # PLOT DAG
 
-if [ $CLEAN ]; then
-    
-    echo -e "\n>>> Cleaning up workflow directory..."
+    DOT=$(which dot) # check graphviz installed
 
-    exec "nextflow clean -force -keep-logs -quiet -but none" # execute clean
+    DAG=$(ls -t logs/*/*.dot 2> /dev/null | head -n 1) # find latest dag; error suppressed
 
-    exec "tar -cf workClean.tar work" # archive .command files
+    if [ -z $DOT ] || [ -z $DAG ]; then # DAG dependencies missing
 
-    exec "rm -r work" # remove cleaned work directory
+        echo -e "\n*** Unable to plot DAG ***"
 
-    # remove singularity cache directory layers; ~/.singularity/cache
-    # singularity cache clean -f
+    else # Graphiv installed & DAG found
 
-    # remove nextflow singularity cache images; cacheDir
-    # rm -r ./singularity
+        echo -e "\n>>> Generating DAG..."
 
-fi # checks; clean
+        exec "dot -Tpdf $DAG -O" # execute graphviz
+        
+        exec "cp ${DAG}.pdf $WORKDIR/dag_latest.pdf" # publish latest dag
 
-echo -e "\n>>> ResultDir: $(basename $NF_LAUNCH_SUBDIR)"
+    fi # checks; plot
 
-echo -e "\nDONE\n"
+
+    # CLEAN UP
+
+    if [ $CLEAN ]; then
+        
+        echo -e "\n>>> Cleaning up workflow directory..."
+
+        exec "nextflow clean -force -keep-logs -quiet -but none" # execute clean
+
+        exec "tar -cf workClean.tar work" # archive .command files
+
+        exec "rm -r work" # remove cleaned work directory
+
+        # remove singularity cache directory layers; ~/.singularity/cache
+        # singularity cache clean -f
+
+        # remove nextflow singularity cache images; cacheDir
+        # rm -r ./singularity
+
+    fi # checks; clean
+
+    echo -e "\n>>> ResultDir: $(basename $NF_LAUNCH_SUBDIR)"
+
+    echo -e "\nDONE\n"
+
+fi # CHECK; LAUNCH NEXTFLOW
