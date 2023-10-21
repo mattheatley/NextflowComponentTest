@@ -2,7 +2,7 @@
 process MODULE {
 
         tag "TAG-${INPUT_VAL}"
-
+        shell '/bin/bash', '-ue' //,'+e'
         debug true
 
         fair false
@@ -10,7 +10,7 @@ process MODULE {
 
         memory 1.GB
         cpus 2
-        errorStrategy 'retry'
+        errorStrategy 'ignore'
 
         maxRetries 1
 
@@ -28,14 +28,34 @@ process MODULE {
 
 
         script:
-            
+
             """
+
             echo "executing ${INPUT_VAL} (attempt ${task.attempt} of ${1+task.maxRetries})"
-            echo "${INPUT_VAL}" > ${INPUT_VAL}.txt
+
             sleep 2
             if [[ "${INPUT_VAL}" != "E" ]]; then
                 echo "info" > MISSING.txt
             fi
+
+            echo "${INPUT_VAL}" > ${INPUT_VAL}.txt
+            
+            > test.sh
+
+            ls *shh
+            ERROR=\$?            
+            echo "exit: \$ERROR"
+
+            if [ \$ERROR -eq 0 ]; then 
+                echo "SUCCESS!!!"
+            fi
+            if ! [ \$ERROR -eq 0 ]; then 
+                echo "ERROR!!!"
+
+            fi
+
+            echo "MORE STUFF..."
+
             """
             
     } 
@@ -44,7 +64,8 @@ process MODULE {
 
     workflow SUBWORKFLOW {
         
-        CHANNEL_VAL = Channel.fromList( ['B','A','D','C','E'] )
+     // CHANNEL_VAL = Channel.fromList( ['B','A','D','C','E'] )
+        CHANNEL_VAL = Channel.fromList( ['B','A','D','C'] )
         MODULE( CHANNEL_VAL )
 
         }
